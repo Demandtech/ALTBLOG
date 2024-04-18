@@ -45,7 +45,7 @@ export const register = async (
 
 export const login = async (email, password) => {
 	if ((!email, !password)) {
-		throw new ErrorAndStatus("All fields are required", 500);
+		throw new ErrorAndStatus("All fields are required", 401);
 	}
 	try {
 		let user = await UserModel.findOne({ email });
