@@ -39,7 +39,7 @@ export const register = async (
 
 		return newUser;
 	} catch (error) {
-		throw new ErrorAndStatuss(error?.message, 500);
+		throw new ErrorAndStatus(error?.message, 500);
 	}
 };
 
