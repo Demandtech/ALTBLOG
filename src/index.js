@@ -14,7 +14,7 @@ app.get("/", (_, res) => {
 });
 
 app.use("/api/auth", authRoute);
-app.use("/api/blog", blogRoute);
+app.use("/api/posts", blogRoute);
 
 app.all("*", (req, res) => {
 	res.status(404).json({ message: `Page ${req.url} not found` });

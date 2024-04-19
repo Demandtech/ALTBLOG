@@ -70,8 +70,12 @@ export const login = async (email, password) => {
 			jwtSec,
 			{ expiresIn: "1hr" }
 		);
-		return {token, user};
+		user = user.toObject();
 
+		delete user.password;
+		delete user.__v;
+
+		return { token, user };
 	} catch (error) {
 		throw new ErrorAndStatus(error?.message, 500);
 	}
