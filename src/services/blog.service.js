@@ -81,7 +81,7 @@ export const allBlogPost = async (page = 1, limit = 5, searchQuery = null) => {
 				last_page,
 				first_item,
 			},
-			data: blogPosts,
+			posts: blogPosts,
 		};
 	} catch (error) {
 		throw new ErrorAndStatus(error.message, 500);
@@ -136,9 +136,9 @@ export const ownerBlogPosts = async (
 				item_per_page: limit,
 				first_item,
 				last_page,
-				total_items
+				total_items,
 			},
-			data: blogPosts,
+			posts: blogPosts,
 		};
 	} catch (error) {
 		throw new ErrorAndStatus(error.message, 500);
