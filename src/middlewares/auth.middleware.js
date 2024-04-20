@@ -1,7 +1,6 @@
 import Jwt from "jsonwebtoken";
 
 export const authMiddleware = (req, res, next) => {
-	// console.log(req.headers);
 	const authorization = req.headers.authorization;
 
 	if (!authorization) {
@@ -17,23 +16,12 @@ export const authMiddleware = (req, res, next) => {
 	const jwtsec = process.env.JWT_SECRET;
 
 	try {
-		// Jwt.verify(token, jwtsec, (error, decoded) => {
-		// 	if (error) {
-		// 		return res.status(401).json({ message: "Invalid Token" });
-		// 	}
-
-		// 	req.user = decoded;
-		// 	next();
-		// });
 		const decoded = Jwt.verify(token, jwtsec);
 
 		req.user = decoded;
 
 		next();
 	} catch (error) {
-		if (error.name === "JsonWebTokenError") {
-			return res.status(401).json({ message: "Invalid token" });
-		}
-		return res.status(500).json({ message: "Internal server error" });
+		return res.status(401).json({ message: error.message });
 	}
 };

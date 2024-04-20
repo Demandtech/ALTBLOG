@@ -2,6 +2,7 @@ import {
 	createBlogPost,
 	allBlogPost,
 	ownerBlogPosts,
+	updatePostState,
 } from "../services/blog.service.js";
 
 export const handleCreateBlogPost = async (req, res) => {
@@ -27,6 +28,7 @@ export const handleCreateBlogPost = async (req, res) => {
 	} catch (error) {
 		res.status(error?.status || 500);
 		res.json({ message: error.message || "Internal Error" });
+		console.log(error.message);
 	}
 };
 
@@ -62,9 +64,9 @@ export const handleOwnerBlogPosts = async (req, res) => {
 		page = page < 1 ? 1 : page;
 		let limit = Number(req.query.limit) || 5;
 		limit = limit < 1 ? 5 : limit;
-		const searchQuery = req.query.search;
+		const state = req.query.state;
 
-		const blogPosts = await ownerBlogPosts(userId, page, limit, searchQuery);
+		const blogPosts = await ownerBlogPosts(userId, page, limit, state);
 
 		return res.json({
 			message: "all User Posts",
@@ -72,5 +74,31 @@ export const handleOwnerBlogPosts = async (req, res) => {
 		});
 	} catch (error) {
 		return res.status(error.status || 500).json({ message: error.message });
+	}
+};
+
+export const handleUpdateBlogPostState = async (req, res) => {
+	const { id: postId } = req.params;
+	const userId = req.user._id;
+
+	if (!postId) {
+		return res.status(400).json({ message: "Post id is required" });
+	}
+
+	if (!userId) {
+		return res.status(400).json({ message: "User id is required" });
+	}
+	try {
+		const updatedBlogPost = await updatePostState(postId, userId);
+
+		return res.json({
+			message: "Post Published successfully",
+			data: updatedBlogPost,
+		});
+		
+	} catch (error) {
+		return res
+			.status(error.status || 500)
+			.json({ message: error.message || "Internal error try again!" });
 	}
 };

@@ -43,7 +43,8 @@ export const createBlogPost = async (
 
 		return newPost;
 	} catch (error) {
-		throw new ErrorAndStatus(error.message, 500);
+		console.log(error.message);
+		throw new ErrorAndStatus(error.message, error.status || 500);
 	}
 };
 
@@ -84,7 +85,7 @@ export const allBlogPost = async (page = 1, limit = 5, searchQuery = null) => {
 			posts: blogPosts,
 		};
 	} catch (error) {
-		throw new ErrorAndStatus(error.message, 500);
+		throw new ErrorAndStatus(error.message, error.status || 500);
 	}
 };
 
@@ -92,27 +93,21 @@ export const ownerBlogPosts = async (
 	userId,
 	page = 1,
 	limit = 5,
-	searchQuery = null
+	state = null
 ) => {
 	if (!userId) {
-		throw new ErrorAndStatus("id is required", 401);
+		throw new ErrorAndStatus("user id is required", 401);
 	}
 
 	try {
 		const skip = (page - 1) * limit;
 
-		// const filter = searchQuery
-		// 	? {
-		// 			state: { $regex: searchQuery, $options: "i" },
-		// 	  }
-		// 	: {};
-
 		let filter = {
 			author: userId,
 		};
 
-		if (searchQuery) {
-			filter.state = { $regex: searchQuery, $options: "i" };
+		if (state) {
+			filter.state = { $regex: state, $options: "i" };
 		}
 
 		const total_items = await blogModel.countDocuments(filter);
@@ -141,6 +136,39 @@ export const ownerBlogPosts = async (
 			posts: blogPosts,
 		};
 	} catch (error) {
-		throw new ErrorAndStatus(error.message, 500);
+		throw new ErrorAndStatus(error.message, error.status || 500);
+	}
+};
+
+export const updatePostState = async (blogPostId, userId) => {
+	if (!blogPostId) {
+		throw new ErrorAndStatus("Post id is required!", 400);
+	}
+
+	if (!userId) {
+		throw new ErrorAndStatus("User id is required!", 400);
+	}
+	try {
+		const blogPost = await blogModel.findById(blogPostId);
+
+		if (!blogPost) {
+			throw new ErrorAndStatus("Post not found!", 404);
+		}
+
+		if (userId != blogPost.author) {
+			throw new ErrorAndStatus("Forbiden!", 403);
+		}
+
+		if (blogPost.state === "PUBLISHED") {
+			throw new ErrorAndStatus("Post was published already", 400);
+		}
+
+		blogPost.state = "PUBLISHED";
+
+		await blogPost.save();
+
+		return blogPost;
+	} catch (error) {
+		throw new ErrorAndStatus(error.message, error.status || 500);
 	}
 };
