@@ -39,7 +39,7 @@ export const register = async (
 
 		return newUser;
 	} catch (error) {
-		throw new ErrorAndStatus(error?.message, 500);
+		throw new ErrorAndStatus(error?.message, error.status || 500);
 	}
 };
 
@@ -77,6 +77,6 @@ export const login = async (email, password) => {
 
 		return { token, user };
 	} catch (error) {
-		throw new ErrorAndStatus(error?.message, 500);
+		throw new ErrorAndStatus(error?.message, error.status || 500);
 	}
 };

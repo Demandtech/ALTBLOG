@@ -2,8 +2,9 @@ import { Router } from "express";
 import {
 	handleCreateBlogPost,
 	handleAllBlogPost,
-	handleOwnerBlogPosts,
-	handleUpdateBlogPostState,
+	handleAuthorBlogPosts,
+	handlePublishBlogPost,
+	handleSingleBlogPost,
 } from "../controllers/blog.controller.js";
 import { validateMiddleware } from "../middlewares/validation.middleware.js";
 import { createBlogPostSchema } from "../validations/blog.validation.js";
@@ -12,6 +13,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 const blogRoute = Router();
 
 blogRoute.get("/", handleAllBlogPost);
+blogRoute.get("/:postId", handleSingleBlogPost);
 
 blogRoute.use(authMiddleware);
 blogRoute.post(
@@ -19,7 +21,7 @@ blogRoute.post(
 	validateMiddleware(createBlogPostSchema),
 	handleCreateBlogPost
 );
-blogRoute.get("/me", handleOwnerBlogPosts);
-blogRoute.get("/:id", handleUpdateBlogPostState);
+blogRoute.get("/authors/:id", handleAuthorBlogPosts);
+blogRoute.get("/publish/:id", handlePublishBlogPost);
 
 export default blogRoute;

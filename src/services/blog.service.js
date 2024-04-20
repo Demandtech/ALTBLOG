@@ -43,7 +43,6 @@ export const createBlogPost = async (
 
 		return newPost;
 	} catch (error) {
-		console.log(error.message);
 		throw new ErrorAndStatus(error.message, error.status || 500);
 	}
 };
@@ -51,15 +50,19 @@ export const createBlogPost = async (
 export const allBlogPost = async (page = 1, limit = 5, searchQuery = null) => {
 	try {
 		const skip = (page - 1) * limit;
-		const filter = searchQuery
-			? {
-					$or: [
-						{ title: { $regex: searchQuery, $options: "i" } },
-						{ author: { $in: await getAuthorsByName(searchQuery) } },
-						{ tags: { $regex: searchQuery, $options: "i" } },
-					],
-			  }
-			: {};
+
+		let filter = {
+			state: "PUBLISHED",
+		};
+
+		if (searchQuery) {
+			filter.$or = [
+				{ title: { $regex: searchQuery, $options: "i" } },
+				{ author: { $in: await getAuthorsByName(searchQuery) } },
+				{ tags: { $regex: searchQuery, $options: "i" } },
+			];
+		}
+
 		const blogPosts = await blogModel
 			.find(filter, { __v: 0 })
 			.skip(skip)
@@ -89,11 +92,11 @@ export const allBlogPost = async (page = 1, limit = 5, searchQuery = null) => {
 	}
 };
 
-export const ownerBlogPosts = async (
+export const authorBlogPosts = async (
 	userId,
 	page = 1,
 	limit = 5,
-	state = null
+	search = null
 ) => {
 	if (!userId) {
 		throw new ErrorAndStatus("user id is required", 401);
@@ -104,10 +107,14 @@ export const ownerBlogPosts = async (
 
 		let filter = {
 			author: userId,
+			state: "PUBLISHED",
 		};
 
-		if (state) {
-			filter.state = { $regex: state, $options: "i" };
+		if (search) {
+			filter.$or = [
+				{ title: { $regex: search, $options: "i" } },
+				{ tags: { $regex: search, $options: "i" } },
+			];
 		}
 
 		const total_items = await blogModel.countDocuments(filter);
@@ -140,7 +147,7 @@ export const ownerBlogPosts = async (
 	}
 };
 
-export const updatePostState = async (blogPostId, userId) => {
+export const publishBlogPost = async (blogPostId, userId) => {
 	if (!blogPostId) {
 		throw new ErrorAndStatus("Post id is required!", 400);
 	}
@@ -155,7 +162,7 @@ export const updatePostState = async (blogPostId, userId) => {
 			throw new ErrorAndStatus("Post not found!", 404);
 		}
 
-		if (userId != blogPost.author) {
+		if (userId !== blogPost.author.toString()) {
 			throw new ErrorAndStatus("Forbiden!", 403);
 		}
 
@@ -164,6 +171,40 @@ export const updatePostState = async (blogPostId, userId) => {
 		}
 
 		blogPost.state = "PUBLISHED";
+
+		await blogPost.save();
+
+		return blogPost;
+	} catch (error) {
+		throw new ErrorAndStatus(error.message, error.status || 500);
+	}
+};
+
+export const singleBlogPost = async (postId, userId) => {
+	if (!postId) {
+		throw new ErrorAndStatus("Post id is required", 400);
+	}
+
+	console.log(userId);
+
+	try {
+		const blogPost = await blogModel.findById(postId, { __v: 0 }).populate({
+			path: "author",
+			select: "-password -__v -updatedAt -createdAt",
+		});
+
+		if (!blogPost) {
+			throw new ErrorAndStatus("Post not found", 404);
+		}
+
+		if (blogPost.state !== "PUBLISHED") {
+			if (!userId || userId !== blogPost.author._id.toString()) {
+				console.log(blogPost.author);
+				throw new ErrorAndStatus("Access forbidden!", 403);
+			}
+		}
+
+		blogPost.read_count += 1;
 
 		await blogPost.save();
 

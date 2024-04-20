@@ -1,9 +1,11 @@
 import {
 	createBlogPost,
 	allBlogPost,
-	ownerBlogPosts,
-	updatePostState,
+	authorBlogPosts,
+	publishBlogPost,
+	singleBlogPost,
 } from "../services/blog.service.js";
+import Jwt from "jsonwebtoken";
 
 export const handleCreateBlogPost = async (req, res) => {
 	const { title, body, tags, state, description } = req.body;
@@ -51,9 +53,9 @@ export const handleAllBlogPost = async (req, res) => {
 	}
 };
 
-export const handleOwnerBlogPosts = async (req, res) => {
+export const handleAuthorBlogPosts = async (req, res) => {
 	try {
-		const userId = req.user._id;
+		let userId = req.params.id;
 
 		if (!userId) {
 			res.status(400);
@@ -64,20 +66,21 @@ export const handleOwnerBlogPosts = async (req, res) => {
 		page = page < 1 ? 1 : page;
 		let limit = Number(req.query.limit) || 5;
 		limit = limit < 1 ? 5 : limit;
-		const state = req.query.state;
+		const search = req.query.search;
 
-		const blogPosts = await ownerBlogPosts(userId, page, limit, state);
+		const blogPosts = await authorBlogPosts(userId, page, limit, search);
 
 		return res.json({
 			message: "all User Posts",
 			data: blogPosts,
 		});
+
 	} catch (error) {
 		return res.status(error.status || 500).json({ message: error.message });
 	}
 };
 
-export const handleUpdateBlogPostState = async (req, res) => {
+export const handlePublishBlogPost = async (req, res) => {
 	const { id: postId } = req.params;
 	const userId = req.user._id;
 
@@ -89,16 +92,55 @@ export const handleUpdateBlogPostState = async (req, res) => {
 		return res.status(400).json({ message: "User id is required" });
 	}
 	try {
-		const updatedBlogPost = await updatePostState(postId, userId);
+		const publishedBlogPost = await publishBlogPost(postId, userId);
 
 		return res.json({
 			message: "Post Published successfully",
-			data: updatedBlogPost,
+			data: publishBlogPost,
 		});
-		
 	} catch (error) {
 		return res
 			.status(error.status || 500)
 			.json({ message: error.message || "Internal error try again!" });
+	}
+};
+
+export const handleSingleBlogPost = async (req, res) => {
+	const postId = req.params.postId;
+
+	const authorization = req.headers.authorization;
+
+	let userId;
+
+	if (authorization) {
+
+		const [bearer, token] = authorization.split(" ");
+
+		const jwtsec = process.env.JWT_SECRET;
+
+		const decoded = Jwt.verify(token, jwtsec);
+
+		userId = decoded._id;
+
+	}
+
+	if (!postId) {
+		return res.status(400).json({ message: "Post id param is required!" });
+	}
+
+	try {
+		const blogPost = await singleBlogPost(postId, userId);
+
+		if (!blogPost) {
+			return res.status(404).json({ message: "Blog post not found!" });
+		}
+		res.json({
+			message: "Single Blog Post",
+			data: blogPost,
+		});
+	} catch (error) {
+		return res
+			.status(error.status || 500)
+			.json({ message: error.message || "Internal error, try again later!" });
 	}
 };
