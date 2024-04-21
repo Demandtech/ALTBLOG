@@ -6,6 +6,8 @@ import {
 	singleBlogPost,
 	allPersonalBlogPosts,
 	updateBlogPost,
+	deleteBlogPost,
+	allBlogPost,
 } from "../services/blog.service.js";
 import Jwt from "jsonwebtoken";
 
@@ -209,10 +211,54 @@ export const handleUpdateBlogPost = async (req, res) => {
 		}
 
 		res.json({ message: "Post updated Successfully", data: updatedPost });
-		
 	} catch (error) {
 		res
 			.status(error.status || 500)
 			.json({ message: error.message || "Internal server error" });
+	}
+};
+
+export const handleDeleteBlogPost = async (req, res) => {
+	const postId = req.params.postId;
+
+	if (!postId) {
+		return res.status(400).json({ message: "post id is required" });
+	}
+
+	try {
+		const isDeleted = await deleteBlogPost(postId, req.user);
+
+		if (isDeleted) {
+			return res.json({ message: "Post deleted successfully" });
+		} else {
+			return res
+				.status(400)
+				.json({ message: "post can not be deleted, try again" });
+		}
+	} catch (error) {
+		res
+			.status(error.status || 500)
+			.json({ message: error.message || "Inter server error! try again" });
+	}
+};
+
+export const handleAllBlogPost = async (req, res) => {
+	try {
+		let page = Number(req.query.page) || 1;
+		page = page < 1 ? 1 : page;
+		let limit = Number(req.query.limit) || 5;
+		limit = limit < 1 ? 5 : limit;
+		const searchQuery = req.query.search;
+		const order = req.query.order || "timestamp";
+		const state = req.query.state;
+		const blogPosts = await allBlogPost(page, limit, searchQuery, order, state);
+
+		res.json({
+			message: "All Blog posts",
+			data: blogPosts,
+		});
+	} catch (error) {
+		res.status(error.status || 500);
+		res.json({ message: error.message || "Internal Error try again later" });
 	}
 };

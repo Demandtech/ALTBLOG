@@ -317,15 +317,14 @@ export const updateBlogPost = async (postId, updatedBlogPost, userId) => {
 	}
 
 	if (updatedBlogPost.title && blogPost.title !== updatedBlogPost.title) {
-
 		const duplicatePostTitle = await blogModel.findOne({
 			title: updatedBlogPost.title,
 		});
 		if (duplicatePostTitle) {
 			throw new ErrorAndStatus("Title exist, title must be unique", 404);
 		}
-	}	
-	
+	}
+
 	const reading_time = await calculateReadingTime(updatedBlogPost.body);
 
 	if (reading_time) {
@@ -337,4 +336,88 @@ export const updateBlogPost = async (postId, updatedBlogPost, userId) => {
 	await blogPost.save();
 
 	return blogPost.populate({ path: "author", select: "-password -__v" });
+};
+
+export const deleteBlogPost = async (postId, user) => {
+	if (!postId) {
+		throw new ErrorAndStatus("Post id param is required", 400);
+	}
+
+	const post = await blogModel.findById(postId);
+
+	if (!post) {
+		throw new ErrorAndStatus("Post not found!", 404);
+	}
+
+	if (post.author.toString() != user._id && user.role !== "ADMIN") {
+		throw new ErrorAndStatus("Access forbidden", 403);
+	}
+
+	await blogModel.findByIdAndDelete(postId);
+
+	return true;
+};
+
+export const allBlogPost = async (
+	page = 1,
+	limit = 5,
+	searchQuery = null,
+	order = "timestamp",
+	state = null
+) => {
+	try {
+		const skip = (page - 1) * limit;
+
+		let filter = {};
+
+		if (searchQuery) {
+			filter.$or = [
+				{ title: { $regex: searchQuery, $options: "i" } },
+				{ author: { $in: await getAuthorsByName(searchQuery) } },
+				{ tags: { $regex: searchQuery, $options: "i" } },
+			];
+		}
+
+		if (state) {
+			filter.state = { $regex: state, $options: "i" } ;
+		}
+
+		const sortOptions = {};
+
+		if (order === "timestamp") {
+			sortOptions.createdAt = -1;
+		} else if (order === "read_count") {
+			sortOptions.read_count = -1;
+		} else {
+			sortOptions.timestamp = 1;
+		}
+
+		const blogPosts = await blogModel
+			.find(filter, { __v: 0 })
+			.sort(sortOptions)
+			.skip(skip)
+			.limit(limit)
+			.populate({
+				path: "author",
+				select: "-password",
+			});
+		const total_items = await blogModel.countDocuments(filter);
+
+		const last_page = Math.ceil(total_items / limit);
+
+		const first_item = skip + 1;
+
+		return {
+			meta: {
+				current_page: page,
+				item_per_page: limit,
+				total_items,
+				last_page,
+				first_item,
+			},
+			posts: blogPosts,
+		};
+	} catch (error) {
+		throw new ErrorAndStatus(error.message, error.status || 500);
+	}
 };
