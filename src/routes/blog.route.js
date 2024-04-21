@@ -1,27 +1,31 @@
 import { Router } from "express";
 import {
 	handleCreateBlogPost,
-	handleAllBlogPost,
-	handleAuthorBlogPosts,
+	handleAllPublishedBlogPost,
+	handleAuthorPublishedBlogPosts,
 	handlePublishBlogPost,
 	handleSingleBlogPost,
+	handleAllPersonalBlogPosts,
+	handleUpdateBlogPost,
 } from "../controllers/blog.controller.js";
 import { validateMiddleware } from "../middlewares/validation.middleware.js";
-import { createBlogPostSchema } from "../validations/blog.validation.js";
+import { blogPostSchema } from "../validations/blog.validation.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const blogRoute = Router();
 
-blogRoute.get("/", handleAllBlogPost);
+blogRoute.get("/", handleAllPublishedBlogPost);
 blogRoute.get("/:postId", handleSingleBlogPost);
+blogRoute.get("/authors/:id", handleAuthorPublishedBlogPosts);
 
 blogRoute.use(authMiddleware);
-blogRoute.post(
-	"/",
-	validateMiddleware(createBlogPostSchema),
-	handleCreateBlogPost
+blogRoute.post("/", validateMiddleware(blogPostSchema), handleCreateBlogPost);
+blogRoute.put(
+	"/:postId",
+	validateMiddleware(blogPostSchema),
+	handleUpdateBlogPost
 );
-blogRoute.get("/authors/:id", handleAuthorBlogPosts);
+blogRoute.get("/p/mypost", handleAllPersonalBlogPosts);
 blogRoute.get("/publish/:id", handlePublishBlogPost);
 
 export default blogRoute;

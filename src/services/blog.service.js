@@ -7,7 +7,6 @@ export const createBlogPost = async (
 	title,
 	body,
 	tags = [],
-	state = "DRAFT",
 	description = "",
 	author
 ) => {
@@ -28,7 +27,6 @@ export const createBlogPost = async (
 			title,
 			description,
 			tags,
-			state,
 			body,
 			reading_time,
 			author,
@@ -47,7 +45,12 @@ export const createBlogPost = async (
 	}
 };
 
-export const allBlogPost = async (page = 1, limit = 5, searchQuery = null) => {
+export const allPublishedBlogPost = async (
+	page = 1,
+	limit = 5,
+	searchQuery = null,
+	order = "timestamp"
+) => {
 	try {
 		const skip = (page - 1) * limit;
 
@@ -63,8 +66,19 @@ export const allBlogPost = async (page = 1, limit = 5, searchQuery = null) => {
 			];
 		}
 
+		const sortOptions = {};
+
+		if (order === "timestamp") {
+			sortOptions.createdAt = -1;
+		} else if (order === "read_count") {
+			sortOptions.read_count = -1;
+		} else {
+			sortOptions.timestamp = 1;
+		}
+
 		const blogPosts = await blogModel
 			.find(filter, { __v: 0 })
+			.sort(sortOptions)
 			.skip(skip)
 			.limit(limit)
 			.populate({
@@ -92,11 +106,12 @@ export const allBlogPost = async (page = 1, limit = 5, searchQuery = null) => {
 	}
 };
 
-export const authorBlogPosts = async (
+export const authorPublishedBlogPosts = async (
 	userId,
 	page = 1,
 	limit = 5,
-	search = null
+	search = null,
+	order = null
 ) => {
 	if (!userId) {
 		throw new ErrorAndStatus("user id is required", 401);
@@ -117,12 +132,23 @@ export const authorBlogPosts = async (
 			];
 		}
 
+		const sortOptions = {};
+
+		if (order === "read_count") {
+			sortOptions.read_count = -1;
+		} else if (order === "timestamp") {
+			sortOptions.createdAt = -1;
+		} else {
+			sortOptions.createdAt = 1;
+		}
+
 		const total_items = await blogModel.countDocuments(filter);
 
 		const last_page = Math.ceil(total_items / limit);
 
 		const blogPosts = await blogModel
 			.find(filter, { __v: 0 })
+			.sort(sortOptions)
 			.skip(skip)
 			.limit(limit)
 			.populate({
@@ -185,8 +211,6 @@ export const singleBlogPost = async (postId, userId) => {
 		throw new ErrorAndStatus("Post id is required", 400);
 	}
 
-	console.log(userId);
-
 	try {
 		const blogPost = await blogModel.findById(postId, { __v: 0 }).populate({
 			path: "author",
@@ -212,4 +236,105 @@ export const singleBlogPost = async (postId, userId) => {
 	} catch (error) {
 		throw new ErrorAndStatus(error.message, error.status || 500);
 	}
+};
+
+export const allPersonalBlogPosts = async (
+	userId,
+	page = 1,
+	limit = 5,
+	state = null,
+	order
+) => {
+	if (!userId) {
+		throw new ErrorAndStatus("user id is required", 401);
+	}
+
+	const sortOptions = {};
+
+	if (order === "timestamp") {
+		sortOptions.createdAt = -1;
+	} else if (order === "read_count") {
+		sortOptions.read_count = -1;
+	} else {
+		sortOptions.timestamp = 1;
+	}
+
+	try {
+		const skip = (page - 1) * limit;
+
+		let filter = {
+			author: userId,
+		};
+
+		if (state) {
+			filter.state = state.toUpperCase();
+		}
+
+		const total_items = await blogModel.countDocuments(filter);
+
+		const last_page = Math.ceil(total_items / limit);
+
+		const blogPosts = await blogModel
+			.find(filter, { __v: 0 })
+			.sort(sortOptions)
+			.skip(skip)
+			.limit(limit)
+			.populate({
+				path: "author",
+				select: "-password -__v -updatedAt -createdAt",
+			});
+
+		const first_item = skip + 1;
+
+		return {
+			meta: {
+				current_page: page,
+				item_per_page: limit,
+				first_item,
+				last_page,
+				total_items,
+			},
+			posts: blogPosts,
+		};
+	} catch (error) {
+		throw new ErrorAndStatus(error.message, error.status || 500);
+	}
+};
+
+export const updateBlogPost = async (postId, updatedBlogPost, userId) => {
+	if (!postId) {
+		throw new ErrorAndStatus("Post id param is required", 400);
+	}
+
+	const blogPost = await blogModel.findById(postId);
+
+	if (!blogPost) {
+		throw new ErrorAndStatus("Post not found", 404);
+	}
+
+	if (blogPost.author.toString() !== userId) {
+		throw new ErrorAndStatus("Forbiden", 403);
+	}
+
+	if (updatedBlogPost.title && blogPost.title !== updatedBlogPost.title) {
+
+		const duplicatePostTitle = await blogModel.findOne({
+			title: updatedBlogPost.title,
+		});
+		if (duplicatePostTitle) {
+			throw new ErrorAndStatus("Title exist, title must be unique", 404);
+		}
+	}	
+	
+	const reading_time = await calculateReadingTime(updatedBlogPost.body);
+
+	if (reading_time) {
+		updatedBlogPost.reading_time = reading_time;
+	}
+
+	Object.assign(blogPost, updatedBlogPost);
+
+	await blogPost.save();
+
+	return blogPost.populate({ path: "author", select: "-password -__v" });
 };

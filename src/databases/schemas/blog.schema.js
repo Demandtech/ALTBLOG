@@ -30,7 +30,6 @@ const blogSchema = mongoose.Schema(
 			type: String,
 			enum: ["DRAFT", "PUBLISHED"],
 			default: "DRAFT",
-			required: true,
 		},
 		read_count: {
 			type: Number,

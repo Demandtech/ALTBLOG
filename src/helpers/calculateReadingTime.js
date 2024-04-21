@@ -11,7 +11,6 @@ const calculateReadingTime = async (text) => {
 
 	if (readingTimePerMinutes < 1) {
 		const readingTimePerSeconds = Math.ceil(readingTimePerMinutes * 60);
-		console.log(readingTimePerSeconds);
 		reading_time = `${readingTimePerSeconds} seconds`;
 	} else if (readingTimePerMinutes >= 1 && readingTimePerMinutes < 60) {
 		reading_time = `${Math.ceil(readingTimePerMinutes)} minutes`;
