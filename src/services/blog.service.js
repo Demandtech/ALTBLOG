@@ -14,7 +14,9 @@ export const createBlogPost = async (
 		throw new ErrorAndStatus("Title, body, and author are required", 400);
 	}
 
-	const blogPost = await blogModel.findOne({ title });
+	const blogPost = await blogModel.findOne({
+		title: { $regex: new RegExp(`^${title}$`, "i") },
+	});
 
 	if (blogPost) {
 		throw new ErrorAndStatus("Post title exist, title must be unique", 400);
@@ -49,7 +51,7 @@ export const allPublishedBlogPost = async (
 	page = 1,
 	limit = 5,
 	searchQuery = null,
-	order = "timestamp"
+	order = ""
 ) => {
 	try {
 		const skip = (page - 1) * limit;
@@ -68,12 +70,22 @@ export const allPublishedBlogPost = async (
 
 		const sortOptions = {};
 
-		if (order === "timestamp") {
-			sortOptions.createdAt = -1;
-		} else if (order === "read_count") {
-			sortOptions.read_count = -1;
-		} else {
-			sortOptions.timestamp = 1;
+		switch (order) {
+			case "newest":
+				sortOptions.publishedAt = -1;
+				break;
+			case "oldest":
+				sortOptions.timestamp = 1;
+				break;
+			case "read_count":
+				sortOptions.read_count = -1;
+				break;
+			case "reading_time":
+				sortOptions.reading_time = -1;
+				break;
+			default:
+				sortOptions.publishedAt = -1;
+				break;
 		}
 
 		const blogPosts = await blogModel
@@ -89,7 +101,7 @@ export const allPublishedBlogPost = async (
 
 		const last_page = Math.ceil(total_items / limit);
 
-		const first_item = skip + 1;
+		const first_item = last_page > 0 ? skip + 1 : 0;
 
 		return {
 			meta: {
@@ -106,14 +118,16 @@ export const allPublishedBlogPost = async (
 	}
 };
 
-export const authorPublishedBlogPosts = async (
-	userId,
+export const authorBlogPosts = async ({
+	authorId = null,
+	userId = null,
 	page = 1,
 	limit = 5,
-	search = null,
-	order = null
-) => {
-	if (!userId) {
+	search = "",
+	order = "",
+	state = "",
+}) => {
+	if (!authorId) {
 		throw new ErrorAndStatus("user id is required", 401);
 	}
 
@@ -121,9 +135,13 @@ export const authorPublishedBlogPosts = async (
 		const skip = (page - 1) * limit;
 
 		let filter = {
-			author: userId,
+			author: authorId,
 			state: "PUBLISHED",
 		};
+
+		if (userId === authorId) {
+			filter.state = { $regex: state, $options: "i" };
+		}
 
 		if (search) {
 			filter.$or = [
@@ -134,12 +152,22 @@ export const authorPublishedBlogPosts = async (
 
 		const sortOptions = {};
 
-		if (order === "read_count") {
-			sortOptions.read_count = -1;
-		} else if (order === "timestamp") {
-			sortOptions.createdAt = -1;
-		} else {
-			sortOptions.createdAt = 1;
+		switch (order) {
+			case "newest":
+				sortOptions.publishedAt = -1;
+				break;
+			case "oldest":
+				sortOptions.timestamp = 1;
+				break;
+			case "read_count":
+				sortOptions.read_count = -1;
+				break;
+			case "reading_time":
+				sortOptions.reading_time = -1;
+				break;
+			default:
+				sortOptions.publishedAt = -1;
+				break;
 		}
 
 		const total_items = await blogModel.countDocuments(filter);
@@ -156,7 +184,7 @@ export const authorPublishedBlogPosts = async (
 				select: "-password -__v -updatedAt -createdAt",
 			});
 
-		const first_item = skip + 1;
+		const first_item = last_page > 0 ? skip + 1 : 0;
 
 		return {
 			meta: {
@@ -197,6 +225,7 @@ export const publishBlogPost = async (blogPostId, userId) => {
 		}
 
 		blogPost.state = "PUBLISHED";
+		blogPost.publishedAt = new Date().toISOString();
 
 		await blogPost.save();
 
@@ -221,14 +250,9 @@ export const singleBlogPost = async (postId, userId) => {
 			throw new ErrorAndStatus("Post not found", 404);
 		}
 
-		if (blogPost.state !== "PUBLISHED") {
-			if (!userId || userId !== blogPost.author._id.toString()) {
-				console.log(blogPost.author);
-				throw new ErrorAndStatus("Access forbidden!", 403);
-			}
+		if (blogPost.author._id.toString() !== userId) {
+			blogPost.read_count += 1;
 		}
-
-		blogPost.read_count += 1;
 
 		await blogPost.save();
 
@@ -243,7 +267,7 @@ export const allPersonalBlogPosts = async (
 	page = 1,
 	limit = 5,
 	state = null,
-	order
+	order = ""
 ) => {
 	if (!userId) {
 		throw new ErrorAndStatus("user id is required", 401);
@@ -251,12 +275,25 @@ export const allPersonalBlogPosts = async (
 
 	const sortOptions = {};
 
-	if (order === "timestamp") {
-		sortOptions.createdAt = -1;
-	} else if (order === "read_count") {
-		sortOptions.read_count = -1;
-	} else {
-		sortOptions.timestamp = 1;
+	switch (order) {
+		case "newest":
+			if (state && state.toUpperCase() === "DRAFT") {
+				sortOptions.createdAt = -1;
+			}
+			sortOptions.publishedAt = -1;
+			break;
+		case "oldest":
+			sortOptions.timestamp = 1;
+			break;
+		case "read_count":
+			sortOptions.read_count = -1;
+			break;
+		case "reading_time":
+			sortOptions.reading_time = -1;
+			break;
+		default:
+			sortOptions.createdAt = -1;
+			break;
 	}
 
 	try {
@@ -267,7 +304,7 @@ export const allPersonalBlogPosts = async (
 		};
 
 		if (state) {
-			filter.state = state.toUpperCase();
+			filter.state = { $regex: state, $options: "i" };
 		}
 
 		const total_items = await blogModel.countDocuments(filter);
@@ -284,7 +321,7 @@ export const allPersonalBlogPosts = async (
 				select: "-password -__v -updatedAt -createdAt",
 			});
 
-		const first_item = skip + 1;
+		const first_item = last_page > 0 ? skip + 1 : 0;
 
 		return {
 			meta: {
@@ -306,6 +343,8 @@ export const updateBlogPost = async (postId, updatedBlogPost, userId) => {
 		throw new ErrorAndStatus("Post id param is required", 400);
 	}
 
+	console.log(updateBlogPost);
+
 	const blogPost = await blogModel.findById(postId);
 
 	if (!blogPost) {
@@ -316,10 +355,14 @@ export const updateBlogPost = async (postId, updatedBlogPost, userId) => {
 		throw new ErrorAndStatus("Forbiden", 403);
 	}
 
-	if (updatedBlogPost.title && blogPost.title !== updatedBlogPost.title) {
+	if (
+		updatedBlogPost.title &&
+		blogPost.title.toLowerCase() !== updatedBlogPost.title.toLowerCase()
+	) {
 		const duplicatePostTitle = await blogModel.findOne({
-			title: updatedBlogPost.title,
+			title: { $regex: new RegExp(`^${updatedBlogPost.title}$`, "i") },
 		});
+
 		if (duplicatePostTitle) {
 			throw new ErrorAndStatus("Title exist, title must be unique", 404);
 		}
@@ -362,7 +405,7 @@ export const allBlogPost = async (
 	page = 1,
 	limit = 5,
 	searchQuery = null,
-	order = "timestamp",
+	order = "",
 	state = null
 ) => {
 	try {
@@ -379,17 +422,27 @@ export const allBlogPost = async (
 		}
 
 		if (state) {
-			filter.state = { $regex: state, $options: "i" } ;
+			filter.state = { $regex: state, $options: "i" };
 		}
 
 		const sortOptions = {};
 
-		if (order === "timestamp") {
-			sortOptions.createdAt = -1;
-		} else if (order === "read_count") {
-			sortOptions.read_count = -1;
-		} else {
-			sortOptions.timestamp = 1;
+		switch (order) {
+			case "newest":
+				sortOptions.createdAt = -1;
+				break;
+			case "oldest":
+				sortOptions.timestamp = 1;
+				break;
+			case "read_count":
+				sortOptions.read_count = -1;
+				break;
+			case "reading_time":
+				sortOptions.reading_time = -1;
+				break;
+			default:
+				sortOptions.createdAt = -1;
+				break;
 		}
 
 		const blogPosts = await blogModel
@@ -405,7 +458,7 @@ export const allBlogPost = async (
 
 		const last_page = Math.ceil(total_items / limit);
 
-		const first_item = skip + 1;
+		const first_item = last_page > 0 ? skip + 1 : 0;
 
 		return {
 			meta: {

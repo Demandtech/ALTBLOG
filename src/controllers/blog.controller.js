@@ -1,7 +1,7 @@
 import {
 	createBlogPost,
 	allPublishedBlogPost,
-	authorPublishedBlogPosts,
+	authorBlogPosts,
 	publishBlogPost,
 	singleBlogPost,
 	allPersonalBlogPosts,
@@ -62,11 +62,23 @@ export const handleAllPublishedBlogPost = async (req, res) => {
 	}
 };
 
-export const handleAuthorPublishedBlogPosts = async (req, res) => {
-	try {
-		let userId = req.params.id;
+export const handleAuthorBlogPosts = async (req, res) => {
+	let authorId = req.params.id;
+	const authorization = req.headers.authorization;
 
-		if (!userId) {
+	try {
+		let userId;
+		if (authorization) {
+			const [bearer, token] = authorization.split(" ");
+
+			const jwtsec = process.env.JWT_SECRET;
+
+			const decoded = Jwt.verify(token, jwtsec);
+
+			userId = decoded._id;
+		}
+
+		if (!authorId) {
 			res.status(400);
 			return res.json({ message: "user id is required" });
 		}
@@ -74,17 +86,20 @@ export const handleAuthorPublishedBlogPosts = async (req, res) => {
 		let page = Number(req.query.page) || 1;
 		page = page < 1 ? 1 : page;
 		let limit = Number(req.query.limit) || 5;
-		limit = limit < 1 ? 5 : limit;
+		limit = limit < 1 ? 12 : limit;
 		const search = req.query.search;
 		const order = req.query.order;
+		const state = req.query.state;
 
-		const blogPosts = await authorPublishedBlogPosts(
+		const blogPosts = await authorBlogPosts({
+			authorId,
 			userId,
 			page,
 			limit,
 			search,
-			order
-		);
+			order,
+			state,
+		});
 
 		return res.json({
 			message: "all User Posts",
@@ -122,12 +137,14 @@ export const handlePublishBlogPost = async (req, res) => {
 
 export const handleSingleBlogPost = async (req, res) => {
 	const postId = req.params.postId;
-
 	const authorization = req.headers.authorization;
 
-	let userId;
+	if (!postId) {
+		return res.status(400).json({ message: "Post id param is required!" });
+	}
 
 	try {
+		let authId;
 		if (authorization) {
 			const [bearer, token] = authorization.split(" ");
 
@@ -135,14 +152,9 @@ export const handleSingleBlogPost = async (req, res) => {
 
 			const decoded = Jwt.verify(token, jwtsec);
 
-			userId = decoded._id;
+			authId = decoded._id;
 		}
-
-		if (!postId) {
-			return res.status(400).json({ message: "Post id param is required!" });
-		}
-
-		const blogPost = await singleBlogPost(postId, userId);
+		const blogPost = await singleBlogPost(postId, authId);
 
 		if (!blogPost) {
 			return res.status(404).json({ message: "Blog post not found!" });
@@ -152,6 +164,12 @@ export const handleSingleBlogPost = async (req, res) => {
 			data: blogPost,
 		});
 	} catch (error) {
+		if (
+			error.name === "JsonWebTokenError" ||
+			error.name === "TokenExpiredError"
+		) {
+			return res.status(401).json({ message: "Unauthorized access" });
+		}
 		return res
 			.status(error.status || 500)
 			.json({ message: error.message || "Internal error, try again later!" });
@@ -169,8 +187,8 @@ export const handleAllPersonalBlogPosts = async (req, res) => {
 
 		let page = Number(req.query.page) || 1;
 		page = page < 1 ? 1 : page;
-		let limit = Number(req.query.limit) || 5;
-		limit = limit < 1 ? 5 : limit;
+		let limit = Number(req.query.limit) || 12;
+		limit = limit < 1 ? 12 : limit;
 		const search = req.query.state;
 		const order = req.query.order;
 
@@ -205,6 +223,8 @@ export const handleUpdateBlogPost = async (req, res) => {
 			{ title, description, body, tags },
 			userId
 		);
+
+		
 
 		if (!updatedPost) {
 			return res.status(404).json({ message: "Post not found" });

@@ -1,26 +1,17 @@
 const calculateReadingTime = async (text) => {
-	if (!text) return;
+	if (!text) return 0;
 
 	const wordCount = text.trim().split(/\s+/).length;
 
 	const wordsPerMinute = 180;
 
-	const readingTimePerMinutes = Math.ceil(wordCount / wordsPerMinute);
+	const readingTimePerMinutes = wordCount / wordsPerMinute;
 
-	let reading_time;
+	// console.log(readingTimePerMinutes, wordCount / wordsPerMinute)
 
-	if (readingTimePerMinutes < 1) {
-		const readingTimePerSeconds = Math.ceil(readingTimePerMinutes * 60);
-		reading_time = `${readingTimePerSeconds} seconds`;
-	} else if (readingTimePerMinutes >= 1 && readingTimePerMinutes < 60) {
-		reading_time = `${Math.ceil(readingTimePerMinutes)} minutes`;
-	} else {
-		const readingTimePerHours = Math.floor(readingTimePerMinutes / 60);
-		const remainingMinutes = Math.ceil(readingTimePerMinutes % 60);
-		reading_time = `${readingTimePerHours} hours ${remainingMinutes} minutes`;
-	}
+	const readingTimeSeconds = Math.ceil(readingTimePerMinutes * 60);
 
-	return reading_time;
+	return readingTimeSeconds;
 };
 
 export default calculateReadingTime;

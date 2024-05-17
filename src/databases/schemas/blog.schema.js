@@ -6,13 +6,14 @@ const blogSchema = mongoose.Schema(
 			type: String,
 			required: true,
 			trim: true,
+			maxlength: 100000,
 		},
 		title: {
 			type: String,
 			required: true,
 			trim: true,
 			unique: true,
-			lowercase: true,
+			// lowercase: true,
 		},
 		description: {
 			type: String,
@@ -34,9 +35,15 @@ const blogSchema = mongoose.Schema(
 		read_count: {
 			type: Number,
 			default: 0,
+			required: true,
 		},
 		reading_time: {
-			type: String,
+			type: Number,
+			default: 0,
+			required: true,
+		},
+		publishedAt: {
+			type: Date,
 		},
 	},
 

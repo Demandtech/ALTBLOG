@@ -3,21 +3,24 @@ import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 import bcrypt from "bcrypt";
 import Jwt from "jsonwebtoken";
 
-export const register = async (
+export const register = async ({
 	email,
 	password,
 	first_name,
 	last_name,
-	role
-) => {
+	profession,
+}) => {
 	try {
 		const user = await UserModel.findOne({ email });
 
 		if (user) {
-			throw new ErrorAndStatus("User exist", 404);
+			throw new ErrorAndStatus(
+				"Email already in use. Please use a different email.",
+				404
+			);
 		}
 
-		if (!first_name || !last_name || !email || !password || !role) {
+		if (!first_name || !last_name || !email || !password || !profession) {
 			throw new ErrorAndStatus("All fields are required", 404);
 		}
 
@@ -28,7 +31,7 @@ export const register = async (
 			last_name,
 			password,
 			email,
-			role,
+			profession,
 		});
 
 		await newUser.save();
@@ -66,16 +69,17 @@ export const login = async (email, password) => {
 				email: user.email,
 				_id: user._id,
 				sub: user._id,
+				name: user.first_name,
 			},
 			jwtSec,
-			{ expiresIn: "1hr" }
+			{ expiresIn: "30d" }
 		);
 		user = user.toObject();
 
 		delete user.password;
 		delete user.__v;
 
-		return { token, user };
+		return { token };
 	} catch (error) {
 		throw new ErrorAndStatus(error?.message, error.status || 500);
 	}

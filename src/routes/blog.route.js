@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
 	handleCreateBlogPost,
 	handleAllPublishedBlogPost,
-	handleAuthorPublishedBlogPosts,
+	handleAuthorBlogPosts,
 	handlePublishBlogPost,
 	handleSingleBlogPost,
 	handleAllPersonalBlogPosts,
@@ -17,12 +17,17 @@ import {
 } from "../validations/blog.validation.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { adminMiddleware } from "../middlewares/admin.middleware.js";
+import { handleLikePost } from "../controllers/like.controller.js";
+import {
+	handlebookmarkPost,
+	handleBookmarkList,
+} from "../controllers/bookmark.controller.js";
 
 const blogRoute = Router();
 
 blogRoute.get("/", handleAllPublishedBlogPost);
 blogRoute.get("/:postId", handleSingleBlogPost);
-blogRoute.get("/authors/:id", handleAuthorPublishedBlogPosts);
+blogRoute.get("/authors/:id", handleAuthorBlogPosts);
 
 // AUTH MIDDLEWARE
 blogRoute.use(authMiddleware);
@@ -38,8 +43,12 @@ blogRoute.put(
 );
 blogRoute.get("/p/mypost", handleAllPersonalBlogPosts);
 blogRoute.get("/publish/:id", handlePublishBlogPost);
-
 blogRoute.delete("/:postId", handleDeleteBlogPost);
+blogRoute.get("/like/:id", handleLikePost);
+blogRoute.get("/bookmark/:id", handlebookmarkPost);
+blogRoute.get("/user/bookmark", handleBookmarkList);
 
-blogRoute.get("/admin/all", adminMiddleware, handleAllBlogPost);
+blogRoute.use(adminMiddleware);
+blogRoute.get("/admin/all", handleAllBlogPost);
+
 export default blogRoute;

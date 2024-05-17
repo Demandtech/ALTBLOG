@@ -2,15 +2,15 @@ import { register, login } from "../services/auth.service.js";
 
 export const handleRegister = async (req, res) => {
 	try {
-		const { email, password, last_name, first_name, role } = req.body;
+		const { email, password, last_name, first_name, profession } = req.body;
 
-		const newUser = await register(
+		const newUser = await register({
 			email,
 			password,
 			last_name,
 			first_name,
-			role
-		);
+			profession,
+		});
 
 		res
 			.status(201)
@@ -27,7 +27,7 @@ export const handleLogin = async (req, res) => {
 	try {
 		const { token, user } = await login(email, password);
 
-		res.json({ message: "Login succesful", token, user });
+		res.json({ message: "Login succesful", data: { token, user } });
 	} catch (error) {
 		res.status(error.status || 500);
 		res.json({ message: error?.message || "Internal Error" });
