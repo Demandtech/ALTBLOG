@@ -14,7 +14,6 @@ export const redisClient = redis.createClient({
 });
 
 const startServer = async () => {
-	console.log(REDIS_HOST);
 	try {
 		await mongoose.connect(MONGO_URL);
 		console.log("DB connected");

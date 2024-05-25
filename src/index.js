@@ -13,7 +13,10 @@ dotenv.config();
 const app = express();
 export const dir_name = path.dirname(new URL(import.meta.url).pathname);
 
-const allowedOrigins = ["http://localhost:5173"];
+const allowedOrigins = [
+	"http://localhost:5173",
+	"https://altblog-frontend.vercel.app/",
+];
 app.use(
 	cors({
 		origin: function (origin, callback) {
