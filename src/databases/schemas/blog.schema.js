@@ -45,6 +45,10 @@ const blogSchema = mongoose.Schema(
 		publishedAt: {
 			type: Date,
 		},
+		featured: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
 	{ timestamps: true }

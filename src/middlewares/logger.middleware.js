@@ -1,15 +1,14 @@
-const logger = (req, res, next) => {
-	console.log({
-		url: req.url,
-		method: req.method,
-		time: new Date(),
-		body: req.body,
-		query: req.query,
-		params: req.params,
+import logger from "../logger.js";
+
+const requestLogger = (req, res, next) => {
+	const start = Date.now();
+
+	res.on("finish", () => {
+		const duration = Date.now() - start;
+		logger.info(`${req.method} ${req.url} ${res.statusCode} ${duration}ms`);
 	});
-    next()
+
+	next();
 };
 
-
-
-export default logger;
+export default requestLogger;

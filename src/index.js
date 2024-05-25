@@ -36,8 +36,6 @@ app.use("/api/auth", authRoute);
 app.use("/api/posts", blogRoute);
 app.use("/api/users", userRoute);
 
-
-
 app.get("/", (req, res) => {
 	res.send("Welcome to Altblog");
 });
@@ -45,7 +43,5 @@ app.get("/", (req, res) => {
 app.all("*", (req, res) => {
 	res.status(404).json({ message: `Page ${req.url} not found` });
 });
-
-
 
 export default app;

@@ -36,10 +36,14 @@ export const bookmarkPost = async ({ userId, postId }) => {
 export const bookmarkList = (userId) => {
 	if (!userId) throw new ErrorAndStatus("User id is required", 400);
 	try {
-		const bookmarks = bookmarkModel.find({ user: userId }).populate({
+		let bookmarks = bookmarkModel.find({ user: userId }).populate({
 			path: "post",
-			select: "-user -__v"
 		});
+
+		bookmarks = bookmarks.toObject();
+
+		delete bookmarks.user;
+		delete bookmarks.__v;
 
 		return bookmarks;
 	} catch (error) {

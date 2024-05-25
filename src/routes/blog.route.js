@@ -5,10 +5,10 @@ import {
 	handleAuthorBlogPosts,
 	handlePublishBlogPost,
 	handleSingleBlogPost,
-	handleAllPersonalBlogPosts,
 	handleUpdateBlogPost,
 	handleDeleteBlogPost,
 	handleAllBlogPost,
+	handleFeaturedPost,
 } from "../controllers/blog.controller.js";
 import { validateMiddleware } from "../middlewares/validation.middleware.js";
 import {
@@ -26,6 +26,7 @@ import {
 const blogRoute = Router();
 
 blogRoute.get("/", handleAllPublishedBlogPost);
+blogRoute.get("/featured", handleFeaturedPost);
 blogRoute.get("/:postId", handleSingleBlogPost);
 blogRoute.get("/authors/:id", handleAuthorBlogPosts);
 
@@ -41,7 +42,7 @@ blogRoute.put(
 	validateMiddleware(updateBlogPostSchema),
 	handleUpdateBlogPost
 );
-blogRoute.get("/p/mypost", handleAllPersonalBlogPosts);
+
 blogRoute.get("/publish/:id", handlePublishBlogPost);
 blogRoute.delete("/:postId", handleDeleteBlogPost);
 blogRoute.get("/like/:id", handleLikePost);

@@ -2,16 +2,33 @@ import mongoose from "mongoose";
 import blogModel from "../databases/models/blog.model.js";
 import UserModel from "../databases/models/user.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
+import likeModel from "../databases/models/like.model.js";
+import { redisClient } from "../server.js";
 
 export const user = async (userId, authId) => {
 	if (!userId) throw new ErrorAndStatus("User id is required", 400);
 
 	try {
+		const cacheKey = `user:${userId}:${authId}`;
+		const cacheData = await redisClient.get(cacheKey);
+
+		if (cacheData) {
+			console.log("Cache");
+			return JSON.parse(cacheData);
+		}
+		console.log("Database");
 		let user = await UserModel.findById(userId);
 
 		if (!user) throw new ErrorAndStatus("User not found", 404);
 
 		const isAuthUser = userId === authId;
+
+		let totalLikes = await likeModel.find().populate({ path: "post" }).lean();
+
+		totalLikes = totalLikes.filter((likes) => {
+			// console.log(likes.post)
+			return likes.post.author.toString() === userId;
+		}).length;
 
 		const userStats = await blogModel.aggregate([
 			{
@@ -74,12 +91,15 @@ export const user = async (userId, authId) => {
 			totalViews,
 			totalReadTime,
 			totalPosts,
+			totalLikes,
 		};
 
 		delete user.password;
 		delete user.__v;
 
 		user.stats = user_stats;
+
+		await redisClient.setEx(cacheKey, 5 * 60, JSON.stringify({ user }));
 
 		return {
 			user,
@@ -134,7 +154,6 @@ export const updateUserPhotos = async ({
 };
 
 export const authUser = async (userId) => {
-	console.log("ERE???");
 	if (!userId) throw new ErrorAndStatus("Id is required", 404);
 
 	try {
@@ -142,7 +161,7 @@ export const authUser = async (userId) => {
 
 		if (!user) throw new ErrorWithStatus("User not found", 400);
 
-		console.log(user);
+		// console.log(user);
 
 		return user;
 	} catch (error) {

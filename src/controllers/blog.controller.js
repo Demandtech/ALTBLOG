@@ -4,10 +4,10 @@ import {
 	authorBlogPosts,
 	publishBlogPost,
 	singleBlogPost,
-	allPersonalBlogPosts,
 	updateBlogPost,
 	deleteBlogPost,
 	allBlogPost,
+	featuredPost,
 } from "../services/blog.service.js";
 import Jwt from "jsonwebtoken";
 
@@ -38,7 +38,19 @@ export const handleCreateBlogPost = async (req, res) => {
 };
 
 export const handleAllPublishedBlogPost = async (req, res) => {
+	// logger.info("Post route accessed");
+	const authorization = req.headers.authorization;
 	try {
+		let userId;
+		if (authorization) {
+			const [bearer, token] = authorization.split(" ");
+
+			const jwtsec = process.env.JWT_SECRET;
+
+			const decoded = Jwt.verify(token, jwtsec);
+
+			userId = decoded._id;
+		}
 		let page = Number(req.query.page) || 1;
 		page = page < 1 ? 1 : page;
 		let limit = Number(req.query.limit) || 5;
@@ -49,10 +61,11 @@ export const handleAllPublishedBlogPost = async (req, res) => {
 			page,
 			limit,
 			searchQuery,
-			order
+			order,
+			userId
 		);
 
-		res.json({
+		res.status(200).json({
 			message: "All Blog posts",
 			data: blogPosts,
 		});
@@ -176,38 +189,37 @@ export const handleSingleBlogPost = async (req, res) => {
 	}
 };
 
-export const handleAllPersonalBlogPosts = async (req, res) => {
-	try {
-		let userId = req.user._id;
+// 	try {
+// 		let userId = req.user._id;
 
-		if (!userId) {
-			res.status(400);
-			return res.json({ message: "user id is required" });
-		}
+// 		if (!userId) {
+// 			res.status(400);
+// 			return res.json({ message: "user id is required" });
+// 		}
 
-		let page = Number(req.query.page) || 1;
-		page = page < 1 ? 1 : page;
-		let limit = Number(req.query.limit) || 12;
-		limit = limit < 1 ? 12 : limit;
-		const search = req.query.state;
-		const order = req.query.order;
+// 		let page = Number(req.query.page) || 1;
+// 		page = page < 1 ? 1 : page;
+// 		let limit = Number(req.query.limit) || 12;
+// 		limit = limit < 1 ? 12 : limit;
+// 		const search = req.query.state;
+// 		const order = req.query.order;
 
-		const blogPosts = await allPersonalBlogPosts(
-			userId,
-			page,
-			limit,
-			search,
-			order
-		);
+// 		const blogPosts = await allPersonalBlogPosts(
+// 			userId,
+// 			page,
+// 			limit,
+// 			search,
+// 			order
+// 		);
 
-		return res.json({
-			message: "all Personal Posts",
-			data: blogPosts,
-		});
-	} catch (error) {
-		return res.status(error.status || 500).json({ message: error.message });
-	}
-};
+// 		return res.json({
+// 			message: "all Personal Posts",
+// 			data: blogPosts,
+// 		});
+// 	} catch (error) {
+// 		return res.status(error.status || 500).json({ message: error.message });
+// 	}
+// };
 
 export const handleUpdateBlogPost = async (req, res) => {
 	const postId = req.params.postId;
@@ -223,8 +235,6 @@ export const handleUpdateBlogPost = async (req, res) => {
 			{ title, description, body, tags },
 			userId
 		);
-
-		
 
 		if (!updatedPost) {
 			return res.status(404).json({ message: "Post not found" });
@@ -280,5 +290,17 @@ export const handleAllBlogPost = async (req, res) => {
 	} catch (error) {
 		res.status(error.status || 500);
 		res.json({ message: error.message || "Internal Error try again later" });
+	}
+};
+
+export const handleFeaturedPost = async (req, res) => {
+	try {
+		const posts = await featuredPost();
+
+		res.json({ message: "Featured posts", data: posts });
+	} catch (error) {
+		return res
+			.status(error.status || 500)
+			.json({ message: error.message || "An error occured, try again!" });
 	}
 };

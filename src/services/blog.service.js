@@ -2,6 +2,9 @@ import blogModel from "../databases/models/blog.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 import calculateReadingTime from "../helpers/calculateReadingTime.js";
 import getAuthorsByName from "../helpers/getAuthorsByName.js";
+import likeModel from "../databases/models/like.model.js";
+import bookmarkModel from "../databases/models/bookmark.model.js";
+import { redisClient } from "../server.js";
 
 export const createBlogPost = async (
 	title,
@@ -51,7 +54,8 @@ export const allPublishedBlogPost = async (
 	page = 1,
 	limit = 5,
 	searchQuery = null,
-	order = ""
+	order = "",
+	userId = null
 ) => {
 	try {
 		const skip = (page - 1) * limit;
@@ -87,8 +91,21 @@ export const allPublishedBlogPost = async (
 				sortOptions.publishedAt = -1;
 				break;
 		}
+		let blogPosts;
 
-		const blogPosts = await blogModel
+		const cacheKey = `allPosts:${JSON.stringify(filter)}:${JSON.stringify(
+			sortOptions
+		)}:${searchQuery}:${page}:${limit}`;
+
+		const cacheData = await redisClient.get(cacheKey);
+
+		if (cacheData) {
+			// console.log("returning data from cache");
+			return JSON.parse(cacheData);
+		}
+
+		// console.log("returning data from database");
+		blogPosts = await blogModel
 			.find(filter, { __v: 0 })
 			.sort(sortOptions)
 			.skip(skip)
@@ -96,14 +113,38 @@ export const allPublishedBlogPost = async (
 			.populate({
 				path: "author",
 				select: "-password -__v -updatedAt -createdAt",
-			});
+			})
+			.lean();
+
 		const total_items = await blogModel.countDocuments(filter);
 
 		const last_page = Math.ceil(total_items / limit);
 
 		const first_item = last_page > 0 ? skip + 1 : 0;
 
-		return {
+		blogPosts = await Promise.all(
+			blogPosts.map(async (blogPost) => {
+				const postLikes = await likeModel.find({ post: blogPost._id });
+				const likeCount = postLikes.length;
+				let isLiked = false;
+				let isBookmarked = false;
+
+				if (userId) {
+					const userLikes = await likeModel.find({ user: userId });
+					const userBookmarks = await bookmarkModel.find({ user: userId });
+					const likePostId = new Set(
+						userLikes.map((like) => like.post.toString())
+					);
+					const bookmarkePostId = new Set(
+						userBookmarks.map((bookmark) => bookmark.post.toString())
+					);
+					isBookmarked = bookmarkePostId.has(blogPost._id.toString());
+					isLiked = likePostId.has(blogPost._id.toString());
+				}
+				return { ...blogPost, likeCount, isLiked, isBookmarked };
+			})
+		);
+		const result = {
 			meta: {
 				current_page: page,
 				item_per_page: limit,
@@ -113,6 +154,10 @@ export const allPublishedBlogPost = async (
 			},
 			posts: blogPosts,
 		};
+
+		await redisClient.setEx(cacheKey, 10 * 60, JSON.stringify(result));
+
+		return result;
 	} catch (error) {
 		throw new ErrorAndStatus(error.message, error.status || 500);
 	}
@@ -170,11 +215,17 @@ export const authorBlogPosts = async ({
 				break;
 		}
 
-		const total_items = await blogModel.countDocuments(filter);
+		const cacheKey = `authorPost:${JSON.stringify(filter)}:${JSON.stringify(
+			sortOptions
+		)}:${limit}:${page}`;
 
-		const last_page = Math.ceil(total_items / limit);
+		const cacheData = await redisClient.get(cacheKey);
 
-		const blogPosts = await blogModel
+		if (cacheData) {
+			return JSON.parse(cacheData);
+		}
+
+		let blogPosts = await blogModel
 			.find(filter, { __v: 0 })
 			.sort(sortOptions)
 			.skip(skip)
@@ -182,11 +233,39 @@ export const authorBlogPosts = async ({
 			.populate({
 				path: "author",
 				select: "-password -__v -updatedAt -createdAt",
-			});
+			})
+			.lean();
+
+		const total_items = await blogModel.countDocuments(filter);
+
+		const last_page = Math.ceil(total_items / limit);
 
 		const first_item = last_page > 0 ? skip + 1 : 0;
 
-		return {
+		blogPosts = await Promise.all(
+			blogPosts.map(async (blogPost) => {
+				const postLikes = await likeModel.find({ post: blogPost._id });
+				const likeCount = postLikes.length;
+				let isLiked = false;
+				let isBookmarked = false;
+
+				if (userId) {
+					const userLikes = await likeModel.find({ user: userId });
+					const userBookmarks = await bookmarkModel.find({ user: userId });
+					const likePostId = new Set(
+						userLikes.map((like) => like.post.toString())
+					);
+					const bookmarkePostId = new Set(
+						userBookmarks.map((bookmark) => bookmark.post.toString())
+					);
+					isBookmarked = bookmarkePostId.has(blogPost._id.toString());
+					isLiked = likePostId.has(blogPost._id.toString());
+				}
+				return { ...blogPost, likeCount, isLiked, isBookmarked };
+			})
+		);
+
+		const result = {
 			meta: {
 				current_page: page,
 				item_per_page: limit,
@@ -196,6 +275,10 @@ export const authorBlogPosts = async ({
 			},
 			posts: blogPosts,
 		};
+
+		await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(result));
+
+		return result;
 	} catch (error) {
 		throw new ErrorAndStatus(error.message, error.status || 500);
 	}
@@ -241,7 +324,14 @@ export const singleBlogPost = async (postId, userId) => {
 	}
 
 	try {
-		const blogPost = await blogModel.findById(postId, { __v: 0 }).populate({
+		const cacheKey = `singlePost:${postId}`;
+		const cacheData = await redisClient.get(cacheKey);
+
+		if (cacheData) {
+			return JSON.parse(cacheData);
+		}
+
+		let blogPost = await blogModel.findById(postId, { __v: 0 }).populate({
 			path: "author",
 			select: "-password -__v -updatedAt -createdAt",
 		});
@@ -256,83 +346,9 @@ export const singleBlogPost = async (postId, userId) => {
 
 		await blogPost.save();
 
+		await redisClient.setEx(cacheKey, 5 * 60, JSON.stringify(blogPost));
+
 		return blogPost;
-	} catch (error) {
-		throw new ErrorAndStatus(error.message, error.status || 500);
-	}
-};
-
-export const allPersonalBlogPosts = async (
-	userId,
-	page = 1,
-	limit = 5,
-	state = null,
-	order = ""
-) => {
-	if (!userId) {
-		throw new ErrorAndStatus("user id is required", 401);
-	}
-
-	const sortOptions = {};
-
-	switch (order) {
-		case "newest":
-			if (state && state.toUpperCase() === "DRAFT") {
-				sortOptions.createdAt = -1;
-			}
-			sortOptions.publishedAt = -1;
-			break;
-		case "oldest":
-			sortOptions.timestamp = 1;
-			break;
-		case "read_count":
-			sortOptions.read_count = -1;
-			break;
-		case "reading_time":
-			sortOptions.reading_time = -1;
-			break;
-		default:
-			sortOptions.createdAt = -1;
-			break;
-	}
-
-	try {
-		const skip = (page - 1) * limit;
-
-		let filter = {
-			author: userId,
-		};
-
-		if (state) {
-			filter.state = { $regex: state, $options: "i" };
-		}
-
-		const total_items = await blogModel.countDocuments(filter);
-
-		const last_page = Math.ceil(total_items / limit);
-
-		const blogPosts = await blogModel
-			.find(filter, { __v: 0 })
-			.sort(sortOptions)
-			.skip(skip)
-			.limit(limit)
-			.populate({
-				path: "author",
-				select: "-password -__v -updatedAt -createdAt",
-			});
-
-		const first_item = last_page > 0 ? skip + 1 : 0;
-
-		return {
-			meta: {
-				current_page: page,
-				item_per_page: limit,
-				first_item,
-				last_page,
-				total_items,
-			},
-			posts: blogPosts,
-		};
 	} catch (error) {
 		throw new ErrorAndStatus(error.message, error.status || 500);
 	}
@@ -342,8 +358,6 @@ export const updateBlogPost = async (postId, updatedBlogPost, userId) => {
 	if (!postId) {
 		throw new ErrorAndStatus("Post id param is required", 400);
 	}
-
-	console.log(updateBlogPost);
 
 	const blogPost = await blogModel.findById(postId);
 
@@ -472,5 +486,20 @@ export const allBlogPost = async (
 		};
 	} catch (error) {
 		throw new ErrorAndStatus(error.message, error.status || 500);
+	}
+};
+
+export const featuredPost = async () => {
+	try {
+		const featured = await blogModel
+			.find({ featured: true })
+			.populate({ path: "author" });
+
+		return featured;
+	} catch (error) {
+		throw new ErrorAndStatus(
+			error.message || "An error occured, try again",
+			error.status || 500
+		);
 	}
 };

@@ -93,7 +93,7 @@ export const handleUpdateUser = async (req, res) => {
 
 export const handleUpdateUserPhotos = async (req, res) => {
 	try {
-		console.log(req);
+		// console.log(req);
 		const avatarPath = req?.files["avatar"][0]?.path;
 		const bannerImagePath = req?.files["banner_image"][0]?.path;
 		const userId = req.user._id;
@@ -122,13 +122,13 @@ export const handleUpdateUserPhotos = async (req, res) => {
 export const handleAuthUser = async (req, res) => {
 	const userId = req.user._id;
 
-	console.log(userId);
+	// console.log(userId);
 
 	if (!userId) res.status(404).json({ message: "User not found" });
 
 	const user = await authUser(userId);
 
-	console.log(user);
+	// console.log(user);
 
 	res.json({ message: "Login User", data: user });
 };
