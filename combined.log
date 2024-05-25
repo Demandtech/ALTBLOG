@@ -1492,3 +1492,13 @@ GET /?page=1&search=&order=&limit=5 304 6ms 2024-05-25T21:08:13.307Z
 GET /avatars/adekunle-avatar.png 304 21ms 2024-05-25T21:08:13.472Z
 GET /avatars/undefined-avatar.jpg 304 22ms 2024-05-25T21:08:13.474Z
 GET /?page=1&search=&order=&limit=5 304 5ms 2024-05-25T21:08:14.718Z
+GET /featured 304 56ms 2024-05-25T21:11:48.308Z
+GET /featured 304 19ms 2024-05-25T21:11:51.256Z
+GET /?page=1&search=&order=&limit=5 304 6ms 2024-05-25T21:11:51.262Z
+GET /?page=1&search=&order=&limit=5 304 6ms 2024-05-25T21:11:51.272Z
+GET /me 304 8ms 2024-05-25T21:11:51.294Z
+GET /avatars/adekunle-avatar.png 304 1ms 2024-05-25T21:11:51.537Z
+GET /avatars/undefined-avatar.jpg 304 1ms 2024-05-25T21:11:51.549Z
+GET /?page=1&search=&order=&limit=5 304 5ms 2024-05-25T21:11:52.553Z
+GET /featured 304 143ms 2024-05-25T21:12:06.811Z
+GET /featured 304 7ms 2024-05-25T21:12:08.642Z

@@ -8,11 +8,13 @@ const REDIS_PORT = process.env.REDIS_PORT || 6379;
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 
 export const redisClient = redis.createClient({
-	host: REDIS_HOST,
-	port: REDIS_PORT,
+	// host: REDIS_HOST,
+	// port: REDIS_PORT,
+	url: `redis://${REDIS_HOST}:${REDIS_PORT}`,
 });
 
 const startServer = async () => {
+	console.log(REDIS_HOST);
 	try {
 		await mongoose.connect(MONGO_URL);
 		console.log("DB connected");
