@@ -52,13 +52,14 @@ export const createBlogPost = async ({
 	}
 };
 
-export const allPublishedBlogPost = async (
+export const allPublishedBlogPost = async ({
 	page = 1,
 	limit = 5,
 	searchQuery = null,
+	category = null,
 	order = "",
-	userId = null
-) => {
+	userId = null,
+}) => {
 	try {
 		const skip = (page - 1) * limit;
 
@@ -66,11 +67,16 @@ export const allPublishedBlogPost = async (
 			state: "PUBLISHED",
 		};
 
+		if (category) {
+			filter.category = category;
+		}
+
 		if (searchQuery) {
 			filter.$or = [
 				{ title: { $regex: searchQuery, $options: "i" } },
 				{ author: { $in: await getAuthorsByName(searchQuery) } },
 				{ tags: { $regex: searchQuery, $options: "i" } },
+				{ category: { $regex: searchQuery, $options: "i" } },
 			];
 		}
 

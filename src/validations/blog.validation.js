@@ -4,7 +4,6 @@ export const createBlogPostSchema = Joi.object({
 	title: Joi.string().required(),
 	body: Joi.string().required(),
 	category: Joi.string().required(),
-	// tags: Joi.array().i.max(5),
 	tags: Joi.array().items(Joi.string().max(255)).max(5).required(),
 
 	description: Joi.string(),

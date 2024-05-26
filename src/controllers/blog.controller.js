@@ -57,14 +57,16 @@ export const handleAllPublishedBlogPost = async (req, res) => {
 		let limit = Number(req.query.limit) || 5;
 		limit = limit < 1 ? 5 : limit;
 		const searchQuery = req.query.search;
+		const category = req.query.category;
 		const order = req.query.order || "timestamp";
-		const blogPosts = await allPublishedBlogPost(
+		const blogPosts = await allPublishedBlogPost({
 			page,
 			limit,
 			searchQuery,
 			order,
-			userId
-		);
+			userId,
+			category,
+		});
 
 		res.status(200).json({
 			message: "All Blog posts",
@@ -231,7 +233,6 @@ export const handleUpdateBlogPost = async (req, res) => {
 		res.status(400).json({ message: "post id param is requrired" });
 	}
 
-	
 	try {
 		const updatedPost = await updateBlogPost(
 			postId,
