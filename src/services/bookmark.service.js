@@ -17,14 +17,14 @@ export const bookmarkPost = async ({ userId, postId }) => {
 		if (bookmarked) {
 			await bookmarkModel.findByIdAndDelete(bookmarked._id);
 
-			return { message: "Post removed from bookmark successfully" };
+			return { message: "Post removed from your bookmark successfully " };
 		}
 
 		const bookmark = await new bookmarkModel({ post: postId, user: userId });
 
 		await bookmark.save();
 
-		return { message: "Post bookmarked successfully" };
+		return { message: `Post added to your bookmark successfully  ` };
 	} catch (error) {
 		throw new ErrorAndStatus(
 			error.message || "Internal error!",
@@ -39,11 +39,12 @@ export const bookmarkList = (userId) => {
 		let bookmarks = bookmarkModel.find({ user: userId }).populate({
 			path: "post",
 		});
+		
 
-		bookmarks = bookmarks.toObject();
+		// bookmarks = bookmarks.toObject();
 
-		delete bookmarks.user;
-		delete bookmarks.__v;
+		// delete bookmarks.user;
+		// delete bookmarks.__v;
 
 		return bookmarks;
 	} catch (error) {

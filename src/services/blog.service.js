@@ -6,13 +6,14 @@ import likeModel from "../databases/models/like.model.js";
 import bookmarkModel from "../databases/models/bookmark.model.js";
 import { redisClient } from "../server.js";
 
-export const createBlogPost = async (
+export const createBlogPost = async ({
 	title,
 	body,
 	tags = [],
 	description = "",
-	author
-) => {
+	author,
+	category,
+}) => {
 	if (!title || !body || !author) {
 		throw new ErrorAndStatus("Title, body, and author are required", 400);
 	}
@@ -35,6 +36,7 @@ export const createBlogPost = async (
 			body,
 			reading_time,
 			author,
+			category,
 		});
 
 		await newPost.save();
@@ -155,7 +157,7 @@ export const allPublishedBlogPost = async (
 			posts: blogPosts,
 		};
 
-		await redisClient.setEx(cacheKey, 10 * 60, JSON.stringify(result));
+		await redisClient.setEx(cacheKey, 2 * 60, JSON.stringify(result));
 
 		return result;
 	} catch (error) {
@@ -217,7 +219,7 @@ export const authorBlogPosts = async ({
 
 		const cacheKey = `authorPost:${JSON.stringify(filter)}:${JSON.stringify(
 			sortOptions
-		)}:${limit}:${page}`;
+		)}:${limit}:${page}:${authorId}`;
 
 		const cacheData = await redisClient.get(cacheKey);
 
@@ -346,7 +348,7 @@ export const singleBlogPost = async (postId, userId) => {
 
 		await blogPost.save();
 
-		await redisClient.setEx(cacheKey, 5 * 60, JSON.stringify(blogPost));
+		await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(blogPost));
 
 		return blogPost;
 	} catch (error) {
@@ -391,6 +393,16 @@ export const updateBlogPost = async (postId, updatedBlogPost, userId) => {
 	Object.assign(blogPost, updatedBlogPost);
 
 	await blogPost.save();
+
+	console.log(userId);
+
+	const singlePostCache = `singlePost:${postId}`;
+	const authorCacheKey = `allPosts:{"author":{"$in":[${userId}]}}`;
+
+	await Promise.all([
+		redisClient.del(authorCacheKey),
+		redisClient.del(singlePostCache),
+	]);
 
 	return blogPost.populate({ path: "author", select: "-password -__v" });
 };

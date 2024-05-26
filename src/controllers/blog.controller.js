@@ -12,18 +12,19 @@ import {
 import Jwt from "jsonwebtoken";
 
 export const handleCreateBlogPost = async (req, res) => {
-	const { title, body, tags, description } = req.body;
+	const { title, body, tags, description, category } = req.body;
 
 	const author = req.user._id;
 
 	try {
-		const newBlogPost = await createBlogPost(
+		const newBlogPost = await createBlogPost({
 			title,
 			body,
 			tags,
 			description,
-			author
-		);
+			author,
+			category,
+		});
 
 		res.status(201);
 		res.json({
@@ -223,16 +224,18 @@ export const handleSingleBlogPost = async (req, res) => {
 
 export const handleUpdateBlogPost = async (req, res) => {
 	const postId = req.params.postId;
-	const { title, description, body, tags } = req.body;
+	const { title, description, body, tags, category } = req.body;
 	const userId = req.user._id;
 
 	if (!postId) {
 		res.status(400).json({ message: "post id param is requrired" });
 	}
+
+	
 	try {
 		const updatedPost = await updateBlogPost(
 			postId,
-			{ title, description, body, tags },
+			{ title, description, body, tags, category },
 			userId
 		);
 
