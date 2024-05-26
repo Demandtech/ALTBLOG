@@ -27,12 +27,12 @@ userRoute.put(
 );
 userRoute.post(
 	"/photos",
+	authMiddleware,
 	validateMiddleware(updateUserPhotoSchema),
 	upload.fields([
 		{ name: "avatar", maxCount: 1 },
 		{ name: "banner_image", maxCount: 1 },
 	]),
-	authMiddleware,
 	handleUpdateUserPhotos
 );
 export default userRoute;

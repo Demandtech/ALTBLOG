@@ -93,9 +93,19 @@ export const handleUpdateUser = async (req, res) => {
 
 export const handleUpdateUserPhotos = async (req, res) => {
 	try {
-		// console.log(req);
-		const avatarPath = req?.files["avatar"][0]?.path;
-		const bannerImagePath = req?.files["banner_image"][0]?.path;
+		console.log(req.files);
+		const { avatar, banner_image } = req.files || {};
+		// const avatarPath = req?.files["avatar"][0]?.path;
+		// const bannerImagePath = req?.files["banner_image"][0]?.path;
+		let avatarPath;
+		if (avatar) {
+			avatarPath = avatar.length > 0 ? avatar[0].path : null;
+		}
+		let bannerImagePath;
+		if (banner_image) {
+			bannerImagePath = banner_image.length > 0 ? banner_image[0].path : null;
+		}
+
 		const userId = req.user._id;
 
 		const avatarUrl = avatarPath
@@ -108,13 +118,24 @@ export const handleUpdateUserPhotos = async (req, res) => {
 					"host"
 			  )}/uploads/banner_images/${path.basename(bannerImagePath)}`
 			: null;
+		const uploadedData = {
+			userId,
+		};
+
+		if (avatarUrl) {
+			uploadedData.avatarUrl = avatarUrl;
+		}
+
+		if (bannerUrl) {
+			uploadedData.bannerUrl = bannerUrl;
+		}
 
 		// const result = await updateUserPhotos({ avatarUrl, bannerUrl, userId });
-		const result = await updateUserPhotos({ bannerUrl, avatarUrl, userId });
+		const result = await updateUserPhotos(uploadedData);
 
 		res.json({ message: "Photos uploaded successfully", data: result });
 	} catch (error) {
-		console.log(error.message);
+		console.log("Line-117", error.message);
 		return res.status(error.status || 500).json({ error: error.message });
 	}
 };
