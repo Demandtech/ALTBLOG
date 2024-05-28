@@ -8,7 +8,7 @@ import {
 	deleteBlogPost,
 	allBlogPost,
 	featuredPost,
-	relatedPost,
+	relatedPosts,
 } from "../services/blog.service.js";
 import Jwt from "jsonwebtoken";
 
@@ -185,9 +185,11 @@ export const handleFeaturedPost = async (req, res) => {
 export const handleRelatedPost = async (req, res) => {
 	const postId = req.params.postId;
 	const page = req.query.page || 1;
+	const search = req.query.search || "";
 	try {
-		const relatedPosts = await relatedPost({ postId, page });
-		res.json({ message: "Featured posts", data: relatedPosts });
+		const results = await relatedPosts({ postId, page, search });
+
+		res.json({ message: "Featured posts", data: results });
 	} catch (error) {
 		return res
 			.status(error.status || 500)

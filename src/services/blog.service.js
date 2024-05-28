@@ -386,11 +386,18 @@ export const featuredPost = async () => {
 	}
 };
 
-export const relatedPost = async ({ postId, page }) => {
+export const relatedPosts = async ({ postId, page, search }) => {
 	if (!postId) {
 		throw new ErrorAndStatus("Post id is required", 400);
 	}
-	const limit = 5;
+
+	const cacheKey = `relatedPost:${postId}:${page}`;
+	const cacheData = await redisClient.get(cacheKey);
+
+	if (cacheData) {
+		return JSON.parse(cacheData);
+	}
+	const limit = 1;
 	const skip = (page - 1) * limit;
 	try {
 		const post = await blogModel.findById(postId);
@@ -398,22 +405,42 @@ export const relatedPost = async ({ postId, page }) => {
 			throw new ErrorAndStatus("Post not found", 404);
 		}
 
-		const relatedPosts= await blogModel
-			.find({
-				_id: { $ne: postId },
-				$or: [
-					{ category: { $regex: new RegExp(post.category, "i") } },
-					{ tags: { $in: post.tags } },
-				],
-			})
+		const filters = {
+			_id: { $ne: postId },
+			$or: [
+				{ category: { $regex: new RegExp(post.category, "i") } },
+				{ tags: { $in: post.tags } },
+			],
+		};
+
+		if (search) {
+			filters.$or = [
+				...filters.$or,
+				{ category: { $regex: search, $options: "i" } },
+				{ title: { $regex: search, $options: "i" } },
+				{ tags: { $regex: search, $options: "i" } },
+			];
+		}
+
+		const posts = await blogModel
+			.find(filters)
 			.skip(skip)
-			.limit(limit)
+			.limit(limit + 1)
 			.populate({
 				path: "author",
 				select: "-password -__v -updatedAt -createdAt",
 			})
 			.lean();
-		return relatedPosts;
+
+		const hasMore = posts.length > limit;
+
+		const response = hasMore ? posts.slice(0, limit) : posts;
+
+		const result = { hasMore, relatedPosts: response };
+
+		await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(result));
+
+		return result;
 	} catch (error) {
 		throw new ErrorAndStatus(
 			error.message || "An error occured, try again later!",
