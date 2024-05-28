@@ -8,6 +8,7 @@ import {
 	deleteBlogPost,
 	allBlogPost,
 	featuredPost,
+	relatedPost,
 } from "../services/blog.service.js";
 import Jwt from "jsonwebtoken";
 
@@ -105,6 +106,7 @@ export const handleAuthorBlogPosts = async (req, res) => {
 		limit = limit < 1 ? 12 : limit;
 		const search = req.query.search;
 		const order = req.query.order;
+		const category = req.query.category;
 		const state = req.query.state;
 
 		const blogPosts = await authorBlogPosts({
@@ -115,6 +117,7 @@ export const handleAuthorBlogPosts = async (req, res) => {
 			search,
 			order,
 			state,
+			category,
 		});
 
 		return res.json({
@@ -123,31 +126,6 @@ export const handleAuthorBlogPosts = async (req, res) => {
 		});
 	} catch (error) {
 		return res.status(error.status || 500).json({ message: error.message });
-	}
-};
-
-export const handlePublishBlogPost = async (req, res) => {
-	const { id: postId } = req.params;
-	const userId = req.user._id;
-
-	if (!postId) {
-		return res.status(400).json({ message: "Post id is required" });
-	}
-
-	if (!userId) {
-		return res.status(400).json({ message: "User id is required" });
-	}
-	try {
-		const publishedBlogPost = await publishBlogPost(postId, userId);
-
-		return res.json({
-			message: "Post Published successfully",
-			data: publishedBlogPost,
-		});
-	} catch (error) {
-		return res
-			.status(error.status || 500)
-			.json({ message: error.message || "Internal error try again!" });
 	}
 };
 
@@ -192,37 +170,55 @@ export const handleSingleBlogPost = async (req, res) => {
 	}
 };
 
-// 	try {
-// 		let userId = req.user._id;
+export const handleFeaturedPost = async (req, res) => {
+	try {
+		const featuredPosts = await featuredPost();
 
-// 		if (!userId) {
-// 			res.status(400);
-// 			return res.json({ message: "user id is required" });
-// 		}
+		res.json({ message: "Featured posts", data: featuredPosts });
+	} catch (error) {
+		return res
+			.status(error.status || 500)
+			.json({ message: error.message || "An error occured, try again!" });
+	}
+};
 
-// 		let page = Number(req.query.page) || 1;
-// 		page = page < 1 ? 1 : page;
-// 		let limit = Number(req.query.limit) || 12;
-// 		limit = limit < 1 ? 12 : limit;
-// 		const search = req.query.state;
-// 		const order = req.query.order;
+export const handleRelatedPost = async (req, res) => {
+	const postId = req.params.postId;
+	const page = req.query.page || 1;
+	try {
+		const relatedPosts = await relatedPost({ postId, page });
+		res.json({ message: "Featured posts", data: relatedPosts });
+	} catch (error) {
+		return res
+			.status(error.status || 500)
+			.json({ message: error.message || "An error occured, try again!" });
+	}
+};
 
-// 		const blogPosts = await allPersonalBlogPosts(
-// 			userId,
-// 			page,
-// 			limit,
-// 			search,
-// 			order
-// 		);
+export const handlePublishBlogPost = async (req, res) => {
+	const { id: postId } = req.params;
+	const userId = req.user._id;
 
-// 		return res.json({
-// 			message: "all Personal Posts",
-// 			data: blogPosts,
-// 		});
-// 	} catch (error) {
-// 		return res.status(error.status || 500).json({ message: error.message });
-// 	}
-// };
+	if (!postId) {
+		return res.status(400).json({ message: "Post id is required" });
+	}
+
+	if (!userId) {
+		return res.status(400).json({ message: "User id is required" });
+	}
+	try {
+		const publishedBlogPost = await publishBlogPost(postId, userId);
+
+		return res.json({
+			message: "Post Published successfully",
+			data: publishedBlogPost,
+		});
+	} catch (error) {
+		return res
+			.status(error.status || 500)
+			.json({ message: error.message || "Internal error try again!" });
+	}
+};
 
 export const handleUpdateBlogPost = async (req, res) => {
 	const postId = req.params.postId;
@@ -294,17 +290,5 @@ export const handleAllBlogPost = async (req, res) => {
 	} catch (error) {
 		res.status(error.status || 500);
 		res.json({ message: error.message || "Internal Error try again later" });
-	}
-};
-
-export const handleFeaturedPost = async (req, res) => {
-	try {
-		const posts = await featuredPost();
-
-		res.json({ message: "Featured posts", data: posts });
-	} catch (error) {
-		return res
-			.status(error.status || 500)
-			.json({ message: error.message || "An error occured, try again!" });
 	}
 };

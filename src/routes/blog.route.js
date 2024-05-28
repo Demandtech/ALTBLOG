@@ -9,6 +9,7 @@ import {
 	handleDeleteBlogPost,
 	handleAllBlogPost,
 	handleFeaturedPost,
+	handleRelatedPost,
 } from "../controllers/blog.controller.js";
 import { validateMiddleware } from "../middlewares/validation.middleware.js";
 import {
@@ -47,7 +48,8 @@ blogRoute.get("/publish/:id", handlePublishBlogPost);
 blogRoute.delete("/:postId", handleDeleteBlogPost);
 blogRoute.get("/like/:id", handleLikePost);
 blogRoute.get("/bookmark/:id", handlebookmarkPost);
-blogRoute.get("/user/bookmark", handleBookmarkList);
+blogRoute.get("/user/bookmarks", handleBookmarkList);
+blogRoute.get("/related/:postId", handleRelatedPost);
 
 blogRoute.use(adminMiddleware);
 blogRoute.get("/admin/all", handleAllBlogPost);

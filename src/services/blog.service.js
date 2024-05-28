@@ -5,6 +5,7 @@ import getAuthorsByName from "../helpers/getAuthorsByName.js";
 import likeModel from "../databases/models/like.model.js";
 import bookmarkModel from "../databases/models/bookmark.model.js";
 import { redisClient } from "../server.js";
+import commentModel from "../databases/models/comment.model.js";
 
 export const createBlogPost = async ({
 	title,
@@ -133,7 +134,9 @@ export const allPublishedBlogPost = async ({
 		blogPosts = await Promise.all(
 			blogPosts.map(async (blogPost) => {
 				const postLikes = await likeModel.find({ post: blogPost._id });
-				const likeCount = postLikes.length;
+				const postComments = await commentModel.find({ post: blogPost._id });
+				const likeCount = postLikes.length || 0;
+				const commentCount = postComments.length || 0;
 				let isLiked = false;
 				let isBookmarked = false;
 
@@ -149,7 +152,7 @@ export const allPublishedBlogPost = async ({
 					isBookmarked = bookmarkePostId.has(blogPost._id.toString());
 					isLiked = likePostId.has(blogPost._id.toString());
 				}
-				return { ...blogPost, likeCount, isLiked, isBookmarked };
+				return { ...blogPost, likeCount, commentCount, isLiked, isBookmarked };
 			})
 		);
 		const result = {
@@ -179,6 +182,7 @@ export const authorBlogPosts = async ({
 	search = "",
 	order = "",
 	state = "",
+	category = null,
 }) => {
 	if (!authorId) {
 		throw new ErrorAndStatus("user id is required", 401);
@@ -191,6 +195,10 @@ export const authorBlogPosts = async ({
 			author: authorId,
 			state: "PUBLISHED",
 		};
+
+		if (category) {
+			filter.category = category;
+		}
 
 		if (userId === authorId) {
 			filter.state = { $regex: state, $options: "i" };
@@ -253,7 +261,9 @@ export const authorBlogPosts = async ({
 		blogPosts = await Promise.all(
 			blogPosts.map(async (blogPost) => {
 				const postLikes = await likeModel.find({ post: blogPost._id });
+				const postComments = await commentModel.find({ post: blogPost._id });
 				const likeCount = postLikes.length;
+				const commentCount = postComments.length;
 				let isLiked = false;
 				let isBookmarked = false;
 
@@ -269,7 +279,7 @@ export const authorBlogPosts = async ({
 					isBookmarked = bookmarkePostId.has(blogPost._id.toString());
 					isLiked = likePostId.has(blogPost._id.toString());
 				}
-				return { ...blogPost, likeCount, isLiked, isBookmarked };
+				return { ...blogPost, likeCount, commentCount, isLiked, isBookmarked };
 			})
 		);
 
@@ -289,6 +299,126 @@ export const authorBlogPosts = async ({
 		return result;
 	} catch (error) {
 		throw new ErrorAndStatus(error.message, error.status || 500);
+	}
+};
+
+export const singleBlogPost = async (postId, userId) => {
+	if (!postId) {
+		throw new ErrorAndStatus("Post id is required", 400);
+	}
+
+	try {
+		const cacheKey = `singlePost:${postId}`;
+		const cacheData = await redisClient.get(cacheKey);
+
+		if (cacheData) {
+			return JSON.parse(cacheData);
+		}
+
+		let blogPost = await blogModel.findById(postId, { __v: 0 }).populate({
+			path: "author",
+			select: "-password -__v -updatedAt -createdAt",
+		});
+
+		if (!blogPost) {
+			throw new ErrorAndStatus("Post not found", 404);
+		}
+
+		if (blogPost.author._id.toString() !== userId) {
+			blogPost.read_count += 1;
+			await blogPost.save();
+		}
+
+		const [postLikes, postComments] = await Promise.all([
+			likeModel.find({ post: blogPost._id }).lean(),
+			commentModel.find({ post: blogPost._id }).lean(),
+		]);
+
+		const likeCount = postLikes.length || 0;
+		const commentCount = postComments.length || 0;
+		let isLiked = false;
+		let isBookmarked = false;
+
+		if (userId) {
+			const [userLikes, userBookmarks] = await Promise.all([
+				likeModel.find({ user: userId }).lean(),
+				bookmarkModel.find({ user: userId }).lean(),
+			]);
+			const likePostId = new Set(userLikes.map((like) => like.post.toString()));
+			const bookmarkePostId = new Set(
+				userBookmarks.map((bookmark) => bookmark.post.toString())
+			);
+			isBookmarked = bookmarkePostId.has(blogPost._id.toString());
+			isLiked = likePostId.has(blogPost._id.toString());
+		}
+
+		const singPost = blogPost.toObject();
+
+		const response = {
+			...singPost,
+			likeCount,
+			isLiked,
+			isBookmarked,
+			commentCount,
+		};
+
+		await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(response));
+
+		return response;
+	} catch (error) {
+		throw new ErrorAndStatus(error.message, error.status || 500);
+	}
+};
+
+export const featuredPost = async () => {
+	try {
+		const featured = await blogModel.find({ featured: true }).populate({
+			path: "author",
+			select: "-password -__v -updatedAt -createdAt",
+		});
+
+		return featured;
+	} catch (error) {
+		throw new ErrorAndStatus(
+			error.message || "An error occured, try again later!",
+			error.status || 500
+		);
+	}
+};
+
+export const relatedPost = async ({ postId, page }) => {
+	if (!postId) {
+		throw new ErrorAndStatus("Post id is required", 400);
+	}
+	const limit = 5;
+	const skip = (page - 1) * limit;
+	try {
+		const post = await blogModel.findById(postId);
+		if (!post) {
+			throw new ErrorAndStatus("Post not found", 404);
+		}
+
+		const relatedPosts= await blogModel
+			.find({
+				_id: { $ne: postId },
+				$or: [
+					{ category: { $regex: new RegExp(post.category, "i") } },
+					{ tags: { $in: post.tags } },
+				],
+			})
+			.skip(skip)
+			.limit(limit)
+			.populate({
+				path: "author",
+				select: "-password -__v -updatedAt -createdAt",
+			})
+			.lean();
+		return relatedPosts;
+	} catch (error) {
+		throw new ErrorAndStatus(
+			error.message || "An error occured, try again later!",
+			error.status || 500
+		);
 	}
 };
 
@@ -319,42 +449,6 @@ export const publishBlogPost = async (blogPostId, userId) => {
 		blogPost.publishedAt = new Date().toISOString();
 
 		await blogPost.save();
-
-		return blogPost;
-	} catch (error) {
-		throw new ErrorAndStatus(error.message, error.status || 500);
-	}
-};
-
-export const singleBlogPost = async (postId, userId) => {
-	if (!postId) {
-		throw new ErrorAndStatus("Post id is required", 400);
-	}
-
-	try {
-		const cacheKey = `singlePost:${postId}`;
-		const cacheData = await redisClient.get(cacheKey);
-
-		if (cacheData) {
-			return JSON.parse(cacheData);
-		}
-
-		let blogPost = await blogModel.findById(postId, { __v: 0 }).populate({
-			path: "author",
-			select: "-password -__v -updatedAt -createdAt",
-		});
-
-		if (!blogPost) {
-			throw new ErrorAndStatus("Post not found", 404);
-		}
-
-		if (blogPost.author._id.toString() !== userId) {
-			blogPost.read_count += 1;
-		}
-
-		await blogPost.save();
-
-		await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(blogPost));
 
 		return blogPost;
 	} catch (error) {
@@ -504,20 +598,5 @@ export const allBlogPost = async (
 		};
 	} catch (error) {
 		throw new ErrorAndStatus(error.message, error.status || 500);
-	}
-};
-
-export const featuredPost = async () => {
-	try {
-		const featured = await blogModel
-			.find({ featured: true })
-			.populate({ path: "author" });
-
-		return featured;
-	} catch (error) {
-		throw new ErrorAndStatus(
-			error.message || "An error occured, try again",
-			error.status || 500
-		);
 	}
 };
