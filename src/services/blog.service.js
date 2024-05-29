@@ -391,19 +391,11 @@ export const relatedPosts = async ({ postId, page, search }) => {
 		throw new ErrorAndStatus("Post id is required", 400);
 	}
 
-	const cacheKey = `relatedPost:${postId}:${page}`;
-	const cacheData = await redisClient.get(cacheKey);
-
-	if (cacheData) {
-		return JSON.parse(cacheData);
-	}
-	const limit = 1;
+	const limit = 4;
 	const skip = (page - 1) * limit;
+
 	try {
 		const post = await blogModel.findById(postId);
-		if (!post) {
-			throw new ErrorAndStatus("Post not found", 404);
-		}
 
 		const filters = {
 			_id: { $ne: postId },
@@ -413,12 +405,25 @@ export const relatedPosts = async ({ postId, page, search }) => {
 			],
 		};
 
+		const cacheKey = `relatedPost:${postId}:${page}:${search}:${JSON.stringify(
+			filters
+		)}`;
+		const cacheData = await redisClient.get(cacheKey);
+
+		if (cacheData) {
+			return JSON.parse(cacheData);
+		}
+
+		if (!post) {
+			throw new ErrorAndStatus("Post not found", 404);
+		}
+
 		if (search) {
 			filters.$or = [
-				...filters.$or,
-				{ category: { $regex: search, $options: "i" } },
 				{ title: { $regex: search, $options: "i" } },
+				{ author: { $in: await getAuthorsByName(search) } },
 				{ tags: { $regex: search, $options: "i" } },
+				{ category: { $regex: search, $options: "i" } },
 			];
 		}
 
@@ -438,7 +443,9 @@ export const relatedPosts = async ({ postId, page, search }) => {
 
 		const result = { hasMore, relatedPosts: response };
 
-		await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(result));
+		if (result.relatedPosts.length > 0) {
+			await redisClient.setEx(cacheKey, 5 * 60, JSON.stringify(result));
+		}
 
 		return result;
 	} catch (error) {
