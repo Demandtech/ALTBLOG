@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import likeSchema from "../schemas/like.schema.js";
+import { postLikeSchema, commentLikeSchema } from "../schemas/like.schema.js";
 
-const likeModel = mongoose.model("Like", likeSchema);
+export const postLikeModel = mongoose.model("PostLike", postLikeSchema);
+export const commentLikeModel = mongoose.model("CommentLike", commentLikeSchema);
 
-export default likeModel;

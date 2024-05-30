@@ -2,8 +2,9 @@ import mongoose from "mongoose";
 import blogModel from "../databases/models/blog.model.js";
 import UserModel from "../databases/models/user.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
-import likeModel from "../databases/models/like.model.js";
+import { postLikeModel } from "../databases/models/like.model.js";
 import { redisClient } from "../server.js";
+
 
 export const user = async (userId, authId) => {
 	if (!userId) throw new ErrorAndStatus("User id is required", 400);
@@ -23,7 +24,10 @@ export const user = async (userId, authId) => {
 
 		const isAuthUser = userId === authId;
 
-		let totalLikes = await likeModel.find().populate({ path: "post" }).lean();
+		let totalLikes = await postLikeModel
+			.find()
+			.populate({ path: "post" })
+			.lean();
 
 		totalLikes = totalLikes.filter((likes) => {
 			// console.log(likes.post)
@@ -78,9 +82,9 @@ export const user = async (userId, authId) => {
 		const {
 			totalPublished = 0,
 			totalViews = 0,
-			totalDraft,
-			totalReadTime,
-			totalPosts,
+			totalDraft = 0,
+			totalReadTime = 0,
+			totalPosts = 0,
 		} = userStats[0] || {};
 
 		user = user.toObject();

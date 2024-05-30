@@ -38,7 +38,7 @@ export const bookmarkList = (userId) => {
 	try {
 		let bookmarks = bookmarkModel.find({ user: userId }).populate({
 			path: "post",
-		});
+		}).lean();
 		
 
 		// bookmarks = bookmarks.toObject();

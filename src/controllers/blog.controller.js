@@ -1,3 +1,4 @@
+import { checkAuthenticate } from "../helpers/checkAuthentication.js";
 import {
 	createBlogPost,
 	allPublishedBlogPost,
@@ -10,7 +11,6 @@ import {
 	featuredPost,
 	relatedPosts,
 } from "../services/blog.service.js";
-import Jwt from "jsonwebtoken";
 
 export const handleCreateBlogPost = async (req, res) => {
 	const { title, body, tags, description, category } = req.body;
@@ -43,16 +43,16 @@ export const handleAllPublishedBlogPost = async (req, res) => {
 	// logger.info("Post route accessed");
 	const authorization = req.headers.authorization;
 	try {
-		let userId;
-		if (authorization) {
-			const [bearer, token] = authorization.split(" ");
+		let userId = checkAuthenticate(authorization);
+		// if (authorization) {
+		// 	const [bearer, token] = authorization.split(" ");
 
-			const jwtsec = process.env.JWT_SECRET;
+		// 	const jwtsec = process.env.JWT_SECRET;
 
-			const decoded = Jwt.verify(token, jwtsec);
+		// 	const decoded = Jwt.verify(token, jwtsec);
 
-			userId = decoded._id;
-		}
+		// 	userId = decoded._id;
+		// }
 		let page = Number(req.query.page) || 1;
 		page = page < 1 ? 1 : page;
 		let limit = Number(req.query.limit) || 5;
@@ -84,16 +84,7 @@ export const handleAuthorBlogPosts = async (req, res) => {
 	const authorization = req.headers.authorization;
 
 	try {
-		let userId;
-		if (authorization) {
-			const [bearer, token] = authorization.split(" ");
-
-			const jwtsec = process.env.JWT_SECRET;
-
-			const decoded = Jwt.verify(token, jwtsec);
-
-			userId = decoded._id;
-		}
+		let userId = checkAuthenticate(authorization);
 
 		if (!authorId) {
 			res.status(400);
@@ -138,16 +129,8 @@ export const handleSingleBlogPost = async (req, res) => {
 	}
 
 	try {
-		let authId;
-		if (authorization) {
-			const [bearer, token] = authorization.split(" ");
+		let authId = checkAuthenticate(authorization);
 
-			const jwtsec = process.env.JWT_SECRET;
-
-			const decoded = Jwt.verify(token, jwtsec);
-
-			authId = decoded._id;
-		}
 		const blogPost = await singleBlogPost(postId, authId);
 
 		if (!blogPost) {
@@ -183,11 +166,14 @@ export const handleFeaturedPost = async (req, res) => {
 };
 
 export const handleRelatedPost = async (req, res) => {
+	const authorization = req.headers.authorization;
 	const postId = req.params.postId;
 	const page = req.query.page || 1;
 	const search = req.query.search || "";
 	try {
-		const results = await relatedPosts({ postId, page, search });
+		let userId = checkAuthenticate(authorization);
+
+		const results = await relatedPosts({ postId, page, search, userId });
 
 		res.json({ message: "Featured posts", data: results });
 	} catch (error) {

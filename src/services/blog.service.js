@@ -2,7 +2,7 @@ import blogModel from "../databases/models/blog.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 import calculateReadingTime from "../helpers/calculateReadingTime.js";
 import getAuthorsByName from "../helpers/getAuthorsByName.js";
-import likeModel from "../databases/models/like.model.js";
+import { postLikeModel } from "../databases/models/like.model.js";
 import bookmarkModel from "../databases/models/bookmark.model.js";
 import { redisClient } from "../server.js";
 import commentModel from "../databases/models/comment.model.js";
@@ -88,7 +88,7 @@ export const allPublishedBlogPost = async ({
 				sortOptions.publishedAt = -1;
 				break;
 			case "oldest":
-				sortOptions.timestamp = 1;
+				sortOptions.timestamps = 1;
 				break;
 			case "read_count":
 				sortOptions.read_count = -1;
@@ -100,21 +100,21 @@ export const allPublishedBlogPost = async ({
 				sortOptions.publishedAt = -1;
 				break;
 		}
-		let blogPosts;
+		// let blogPosts;
 
-		const cacheKey = `allPosts:${JSON.stringify(filter)}:${JSON.stringify(
-			sortOptions
-		)}:${searchQuery}:${page}:${limit}`;
+		// const cacheKey = `allPosts:${JSON.stringify(filter)}:${JSON.stringify(
+		// 	sortOptions
+		// )}:${searchQuery}:${page}:${limit}`;
 
-		const cacheData = await redisClient.get(cacheKey);
+		// const cacheData = await redisClient.get(cacheKey);
 
-		if (cacheData) {
-			// console.log("returning data from cache");
-			return JSON.parse(cacheData);
-		}
+		// if (cacheData) {
+
+		// 	return JSON.parse(cacheData);
+		// }
 
 		// console.log("returning data from database");
-		blogPosts = await blogModel
+		let blogPosts = await blogModel
 			.find(filter, { __v: 0 })
 			.sort(sortOptions)
 			.skip(skip)
@@ -133,7 +133,7 @@ export const allPublishedBlogPost = async ({
 
 		blogPosts = await Promise.all(
 			blogPosts.map(async (blogPost) => {
-				const postLikes = await likeModel.find({ post: blogPost._id });
+				const postLikes = await postLikeModel.find({ post: blogPost._id });
 				const postComments = await commentModel.find({ post: blogPost._id });
 				const likeCount = postLikes.length || 0;
 				const commentCount = postComments.length || 0;
@@ -141,7 +141,7 @@ export const allPublishedBlogPost = async ({
 				let isBookmarked = false;
 
 				if (userId) {
-					const userLikes = await likeModel.find({ user: userId });
+					const userLikes = await postLikeModel.find({ user: userId });
 					const userBookmarks = await bookmarkModel.find({ user: userId });
 					const likePostId = new Set(
 						userLikes.map((like) => like.post.toString())
@@ -166,7 +166,7 @@ export const allPublishedBlogPost = async ({
 			posts: blogPosts,
 		};
 
-		await redisClient.setEx(cacheKey, 2 * 60, JSON.stringify(result));
+		// await redisClient.setEx(cacheKey, 2 * 60, JSON.stringify(result));
 
 		return result;
 	} catch (error) {
@@ -231,15 +231,15 @@ export const authorBlogPosts = async ({
 				break;
 		}
 
-		const cacheKey = `authorPost:${JSON.stringify(filter)}:${JSON.stringify(
-			sortOptions
-		)}:${limit}:${page}:${authorId}`;
+		// const cacheKey = `authorPost:${JSON.stringify(filter)}:${JSON.stringify(
+		// 	sortOptions
+		// )}:${limit}:${page}:${authorId}`;
 
-		const cacheData = await redisClient.get(cacheKey);
+		// const cacheData = await redisClient.get(cacheKey);
 
-		if (cacheData) {
-			return JSON.parse(cacheData);
-		}
+		// if (cacheData) {
+		// 	return JSON.parse(cacheData);
+		// }
 
 		let blogPosts = await blogModel
 			.find(filter, { __v: 0 })
@@ -260,7 +260,7 @@ export const authorBlogPosts = async ({
 
 		blogPosts = await Promise.all(
 			blogPosts.map(async (blogPost) => {
-				const postLikes = await likeModel.find({ post: blogPost._id });
+				const postLikes = await postLikeModel.find({ post: blogPost._id });
 				const postComments = await commentModel.find({ post: blogPost._id });
 				const likeCount = postLikes.length;
 				const commentCount = postComments.length;
@@ -268,8 +268,8 @@ export const authorBlogPosts = async ({
 				let isBookmarked = false;
 
 				if (userId) {
-					const userLikes = await likeModel.find({ user: userId });
-					const userBookmarks = await bookmarkModel.find({ user: userId });
+					const userLikes = await postLikeModel.find({ user: userId });
+					const userBookmarks = await postLikeModel.find({ user: userId });
 					const likePostId = new Set(
 						userLikes.map((like) => like.post.toString())
 					);
@@ -294,7 +294,7 @@ export const authorBlogPosts = async ({
 			posts: blogPosts,
 		};
 
-		await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(result));
+		// await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(result));
 
 		return result;
 	} catch (error) {
@@ -308,12 +308,12 @@ export const singleBlogPost = async (postId, userId) => {
 	}
 
 	try {
-		const cacheKey = `singlePost:${postId}`;
-		const cacheData = await redisClient.get(cacheKey);
+		// const cacheKey = `singlePost:${postId}`;
+		// const cacheData = await redisClient.get(cacheKey);
 
-		if (cacheData) {
-			return JSON.parse(cacheData);
-		}
+		// if (cacheData) {
+		// 	return JSON.parse(cacheData);
+		// }
 
 		let blogPost = await blogModel.findById(postId, { __v: 0 }).populate({
 			path: "author",
@@ -330,7 +330,7 @@ export const singleBlogPost = async (postId, userId) => {
 		}
 
 		const [postLikes, postComments] = await Promise.all([
-			likeModel.find({ post: blogPost._id }).lean(),
+			postLikeModel.find({ post: blogPost._id }).lean(),
 			commentModel.find({ post: blogPost._id }).lean(),
 		]);
 
@@ -341,7 +341,7 @@ export const singleBlogPost = async (postId, userId) => {
 
 		if (userId) {
 			const [userLikes, userBookmarks] = await Promise.all([
-				likeModel.find({ user: userId }).lean(),
+				postLikeModel.find({ user: userId }).lean(),
 				bookmarkModel.find({ user: userId }).lean(),
 			]);
 			const likePostId = new Set(userLikes.map((like) => like.post.toString()));
@@ -362,7 +362,7 @@ export const singleBlogPost = async (postId, userId) => {
 			commentCount,
 		};
 
-		await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(response));
+		// await redisClient.setEx(cacheKey, 1 * 60, JSON.stringify(response));
 
 		return response;
 	} catch (error) {
@@ -386,7 +386,7 @@ export const featuredPost = async () => {
 	}
 };
 
-export const relatedPosts = async ({ postId, page, search }) => {
+export const relatedPosts = async ({ postId, page, search, userId = null }) => {
 	if (!postId) {
 		throw new ErrorAndStatus("Post id is required", 400);
 	}
@@ -405,14 +405,14 @@ export const relatedPosts = async ({ postId, page, search }) => {
 			],
 		};
 
-		const cacheKey = `relatedPost:${postId}:${page}:${search}:${JSON.stringify(
-			filters
-		)}`;
-		const cacheData = await redisClient.get(cacheKey);
+		// const cacheKey = `relatedPost:${postId}:${page}:${search}:${JSON.stringify(
+		// 	filters
+		// )}`;
+		// const cacheData = await redisClient.get(cacheKey);
 
-		if (cacheData) {
-			return JSON.parse(cacheData);
-		}
+		// if (cacheData) {
+		// 	return JSON.parse(cacheData);
+		// }
 
 		if (!post) {
 			throw new ErrorAndStatus("Post not found", 404);
@@ -427,7 +427,7 @@ export const relatedPosts = async ({ postId, page, search }) => {
 			];
 		}
 
-		const posts = await blogModel
+		let posts = await blogModel
 			.find(filters)
 			.skip(skip)
 			.limit(limit + 1)
@@ -437,15 +437,40 @@ export const relatedPosts = async ({ postId, page, search }) => {
 			})
 			.lean();
 
+		posts = await Promise.all(
+			posts.map(async (blogPost) => {
+				const postLikes = await postLikeModel.find({ post: blogPost._id });
+				const postComments = await commentModel.find({ post: blogPost._id });
+				const likeCount = postLikes.length;
+				const commentCount = postComments.length;
+				let isLiked = false;
+				let isBookmarked = false;
+
+				if (userId) {
+					const userLikes = await postLikeModel.find({ user: userId });
+					const userBookmarks = await postLikeModel.find({ user: userId });
+					const likePostId = new Set(
+						userLikes.map((like) => like.post.toString())
+					);
+					const bookmarkePostId = new Set(
+						userBookmarks.map((bookmark) => bookmark.post.toString())
+					);
+					isBookmarked = bookmarkePostId.has(blogPost._id.toString());
+					isLiked = likePostId.has(blogPost._id.toString());
+				}
+				return { ...blogPost, likeCount, commentCount, isLiked, isBookmarked };
+			})
+		);
+
 		const hasMore = posts.length > limit;
 
 		const response = hasMore ? posts.slice(0, limit) : posts;
 
 		const result = { hasMore, relatedPosts: response };
 
-		if (result.relatedPosts.length > 0) {
-			await redisClient.setEx(cacheKey, 5 * 60, JSON.stringify(result));
-		}
+		// if (result.relatedPosts.length > 0) {
+		// 	await redisClient.setEx(cacheKey, 5 * 60, JSON.stringify(result));
+		// }
 
 		return result;
 	} catch (error) {

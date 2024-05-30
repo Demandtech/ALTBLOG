@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import authRoute from "./routes/auth.route.js";
 import blogRoute from "./routes/blog.route.js";
 import userRoute from "./routes/user.route.js";
+import commentRoute from "./routes/comment.route.js";
 import bodyParser from "body-parser";
 import logger from "./middlewares/logger.middleware.js";
 import cors from "cors";
@@ -39,9 +40,10 @@ app.use("/uploads", express.static(path.join(dir_name, "uploads")));
 app.use("/api/auth", authRoute);
 app.use("/api/posts", blogRoute);
 app.use("/api/users", userRoute);
+app.use("/api/comments", commentRoute);
 
 app.get("/", (req, res) => {
-	res.send("Welcome to Altblog");
+	res.send("Welcome to Blogshot Api");
 });
 
 app.all("*", (req, res) => {
