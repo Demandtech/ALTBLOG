@@ -8,7 +8,7 @@ import {
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/file.middleware.js";
 import { validateMiddleware } from "../middlewares/validation.middleware.js";
-import { updateBlogPostSchema } from "../validations/blog.validation.js";
+
 import {
 	updateUserPhotoSchema,
 	updateUserDetailsSchema,

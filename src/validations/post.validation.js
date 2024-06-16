@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-export const createBlogPostSchema = Joi.object({
+export const createPostSchema = Joi.object({
 	title: Joi.string().required(),
 	body: Joi.string().required(),
 	category: Joi.string().required(),
@@ -9,7 +9,7 @@ export const createBlogPostSchema = Joi.object({
 	description: Joi.string(),
 });
 
-export const updateBlogPostSchema = Joi.object({
+export const updatePostSchema = Joi.object({
 	title: Joi.string(),
 	body: Joi.string(),
 	category: Joi.string(),

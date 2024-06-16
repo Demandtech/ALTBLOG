@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import blogModel from "../databases/models/blog.model.js";
+import postModel from "../databases/models/post.model.js";
 import UserModel from "../databases/models/user.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 import { postLikeModel } from "../databases/models/like.model.js";
@@ -9,15 +9,16 @@ import { redisClient } from "../server.js";
 export const user = async (userId, authId) => {
 	if (!userId) throw new ErrorAndStatus("User id is required", 400);
 
+	
 	try {
-		const cacheKey = `user:${userId}:${authId}`;
-		const cacheData = await redisClient.get(cacheKey);
+		// const cacheKey = `user:${userId}:${authId}`;
+		// const cacheData = await redisClient.get(cacheKey);
 
-		if (cacheData) {
-			console.log("Cache");
-			return JSON.parse(cacheData);
-		}
-		console.log("Database");
+		// if (cacheData) {
+		// 	console.log("Cache");
+		// 	return JSON.parse(cacheData);
+		// }
+		// console.log("Database");
 		let user = await UserModel.findById(userId);
 
 		if (!user) throw new ErrorAndStatus("User not found", 404);
@@ -28,13 +29,13 @@ export const user = async (userId, authId) => {
 			.find()
 			.populate({ path: "post" })
 			.lean();
-
+       
 		totalLikes = totalLikes.filter((likes) => {
-			// console.log(likes.post)
-			return likes.post.author.toString() === userId;
+			console.log(likes)
+			return likes?.post?.author.toString() === userId;
 		}).length;
 
-		const userStats = await blogModel.aggregate([
+		const userStats = await postModel.aggregate([
 			{
 				$match: {
 					author: new mongoose.Types.ObjectId(userId),
@@ -103,12 +104,13 @@ export const user = async (userId, authId) => {
 
 		user.stats = user_stats;
 
-		await redisClient.setEx(cacheKey, 5 * 60, JSON.stringify({ user }));
+		// await redisClient.setEx(cacheKey, 5 * 60, JSON.stringify({ user }));
 
 		return {
 			user,
 		};
 	} catch (error) {
+		console.log(error)
 		throw new ErrorAndStatus(
 			error.message || "Internal Error, try again later!",
 			error.status || 500

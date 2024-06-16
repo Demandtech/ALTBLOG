@@ -1,9 +1,13 @@
-import { likePost, likeComment } from "../services/like.service.js";
+import {
+	likePost,
+	likeComment,
+	likePostUsers,
+} from "../services/like.service.js";
 
 export const handleLikePost = async (req, res) => {
 	try {
 		const userId = req.user._id;
-		const postId = req.params.id;
+		const { postId } = req.params;
 
 		const result = await likePost({ userId, postId });
 
@@ -18,9 +22,7 @@ export const handleLikePost = async (req, res) => {
 export const handleLikeComment = async (req, res) => {
 	try {
 		const userId = req.user._id;
-		const commentId = req.params.id;
-
-		console.log(commentId);
+		const { commentId } = req.params;
 
 		const result = await likeComment({ userId, commentId });
 
@@ -29,5 +31,17 @@ export const handleLikeComment = async (req, res) => {
 		res.status(error.status || 500).json({
 			message: error.message || "An error occured, please try again!",
 		});
+	}
+};
+
+export const handleLikePostUsers = async (req, res) => {
+	const postId = req.params.postId;
+
+	try {
+		const users = await likePostUsers(postId);
+
+		res.json({ data: users });
+	} catch (error) {
+		console.log(error);
 	}
 };

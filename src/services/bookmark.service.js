@@ -1,4 +1,4 @@
-import blogModel from "../databases/models/blog.model.js";
+import blogModel from "../databases/models/post.model.js";
 import bookmarkModel from "../databases/models/bookmark.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 

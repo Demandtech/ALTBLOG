@@ -1,4 +1,4 @@
-import blogModel from "../databases/models/blog.model.js";
+import blogModel from "../databases/models/post.model.js";
 import commentModel from "../databases/models/comment.model.js";
 import {
 	postLikeModel,
@@ -68,5 +68,36 @@ export const likeComment = async ({ userId, commentId }) => {
 			error.message || "Internal error!",
 			error.status || 500
 		);
+	}
+};
+
+export const likePostUsers = async (postId) => {
+	if (!postId) {
+		throw new ErrorAndStatus("Post Id is required", 400);
+	}
+	try {
+		let comments = await postLikeModel
+			.find({ post: postId })
+			.populate({
+				path: "user",
+				select: "first_name last_name avatar profession",
+			})
+			.lean();
+
+		let users = comments.map((comment) => comment.user);
+
+		users = users.reduce((acc, current) => {
+			const x = acc.find((item) => item._id === current._id);
+			if (!x) {
+				return acc.concat([current]);
+			} else {
+				return acc;
+			}
+		}, []);
+
+		// console.log(users);
+		return { message: "All Post Like Users", data: users };
+	} catch (error) {
+		console.log(error);
 	}
 };

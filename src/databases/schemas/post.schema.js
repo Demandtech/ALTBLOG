@@ -1,19 +1,21 @@
 import mongoose from "mongoose";
+import bookmarkSchema from "./bookmark.schema.js";
+import commentSchema from "./comment.schema.js";
+import { postLikeSchema } from "./like.schema.js";
 
-const blogSchema = mongoose.Schema(
+const postSchema = mongoose.Schema(
 	{
 		body: {
 			type: String,
 			required: true,
 			trim: true,
-			maxlength: 100000,
+			// maxlength: 100000,
 		},
 		title: {
 			type: String,
 			required: true,
 			trim: true,
 			unique: true,
-			// lowercase: true,
 		},
 		description: {
 			type: String,
@@ -58,4 +60,15 @@ const blogSchema = mongoose.Schema(
 	{ timestamps: true }
 );
 
-export default blogSchema;
+postSchema.pre("remove", function (next) {
+	console.log("CALLED");
+	try {
+		// await postLikeSchema.deleteMany({ post: this._id });
+		postLikeSchema.remove({ post: this._id }).exec();
+		next();
+	} catch (err) {
+		next(err);
+	}
+});
+
+export default postSchema;

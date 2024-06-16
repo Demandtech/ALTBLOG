@@ -1,24 +1,24 @@
 import { checkAuthenticate } from "../helpers/checkAuthentication.js";
 import {
-	createBlogPost,
-	allPublishedBlogPost,
-	authorBlogPosts,
-	publishBlogPost,
-	singleBlogPost,
-	updateBlogPost,
-	deleteBlogPost,
-	allBlogPost,
+	createPost,
+	allPublishedPost,
+	authorPosts,
+	publishPost,
+	singlePost,
+	updatePost,
+	deletePost,
+	allPosts,
 	featuredPost,
 	relatedPosts,
-} from "../services/blog.service.js";
+} from "../services/post.service.js";
 
-export const handleCreateBlogPost = async (req, res) => {
+export const handleCreatePost = async (req, res) => {
 	const { title, body, tags, description, category } = req.body;
 
 	const author = req.user._id;
 
 	try {
-		const newBlogPost = await createBlogPost({
+		const newPost = await createPost({
 			title,
 			body,
 			tags,
@@ -30,7 +30,7 @@ export const handleCreateBlogPost = async (req, res) => {
 		res.status(201);
 		res.json({
 			message: "Post created successfully",
-			post: newBlogPost,
+			post: newPost,
 		});
 	} catch (error) {
 		res.status(error?.status || 500);
@@ -39,20 +39,12 @@ export const handleCreateBlogPost = async (req, res) => {
 	}
 };
 
-export const handleAllPublishedBlogPost = async (req, res) => {
+export const handleAllPublishedPost = async (req, res) => {
 	// logger.info("Post route accessed");
 	const authorization = req.headers.authorization;
 	try {
 		let userId = checkAuthenticate(authorization);
-		// if (authorization) {
-		// 	const [bearer, token] = authorization.split(" ");
 
-		// 	const jwtsec = process.env.JWT_SECRET;
-
-		// 	const decoded = Jwt.verify(token, jwtsec);
-
-		// 	userId = decoded._id;
-		// }
 		let page = Number(req.query.page) || 1;
 		page = page < 1 ? 1 : page;
 		let limit = Number(req.query.limit) || 5;
@@ -60,7 +52,7 @@ export const handleAllPublishedBlogPost = async (req, res) => {
 		const searchQuery = req.query.search;
 		const category = req.query.category;
 		const order = req.query.order || "timestamp";
-		const blogPosts = await allPublishedBlogPost({
+		const posts = await allPublishedPost({
 			page,
 			limit,
 			searchQuery,
@@ -71,7 +63,7 @@ export const handleAllPublishedBlogPost = async (req, res) => {
 
 		res.status(200).json({
 			message: "All Blog posts",
-			data: blogPosts,
+			data: posts,
 		});
 	} catch (error) {
 		res.status(error.status || 500);
@@ -79,7 +71,7 @@ export const handleAllPublishedBlogPost = async (req, res) => {
 	}
 };
 
-export const handleAuthorBlogPosts = async (req, res) => {
+export const handleAuthorPosts = async (req, res) => {
 	let authorId = req.params.id;
 	const authorization = req.headers.authorization;
 
@@ -100,7 +92,7 @@ export const handleAuthorBlogPosts = async (req, res) => {
 		const category = req.query.category;
 		const state = req.query.state;
 
-		const blogPosts = await authorBlogPosts({
+		const posts = await authorPosts({
 			authorId,
 			userId,
 			page,
@@ -113,14 +105,14 @@ export const handleAuthorBlogPosts = async (req, res) => {
 
 		return res.json({
 			message: "all User Posts",
-			data: blogPosts,
+			data: posts,
 		});
 	} catch (error) {
 		return res.status(error.status || 500).json({ message: error.message });
 	}
 };
 
-export const handleSingleBlogPost = async (req, res) => {
+export const handleSinglePost = async (req, res) => {
 	const postId = req.params.postId;
 	const authorization = req.headers.authorization;
 
@@ -131,14 +123,14 @@ export const handleSingleBlogPost = async (req, res) => {
 	try {
 		let authId = checkAuthenticate(authorization);
 
-		const blogPost = await singleBlogPost(postId, authId);
+		const post = await singlePost(postId, authId);
 
-		if (!blogPost) {
+		if (!post) {
 			return res.status(404).json({ message: "Blog post not found!" });
 		}
 		res.json({
 			message: "Single Blog Post",
-			data: blogPost,
+			data: post,
 		});
 	} catch (error) {
 		if (
@@ -183,7 +175,7 @@ export const handleRelatedPost = async (req, res) => {
 	}
 };
 
-export const handlePublishBlogPost = async (req, res) => {
+export const handlePublishPost = async (req, res) => {
 	const { id: postId } = req.params;
 	const userId = req.user._id;
 
@@ -195,11 +187,11 @@ export const handlePublishBlogPost = async (req, res) => {
 		return res.status(400).json({ message: "User id is required" });
 	}
 	try {
-		const publishedBlogPost = await publishBlogPost(postId, userId);
+		const publishedPost = await publishPost(postId, userId);
 
 		return res.json({
 			message: "Post Published successfully",
-			data: publishedBlogPost,
+			data: publishedPost,
 		});
 	} catch (error) {
 		return res
@@ -208,7 +200,7 @@ export const handlePublishBlogPost = async (req, res) => {
 	}
 };
 
-export const handleUpdateBlogPost = async (req, res) => {
+export const handleUpdatePost = async (req, res) => {
 	const postId = req.params.postId;
 	const { title, description, body, tags, category } = req.body;
 	const userId = req.user._id;
@@ -218,7 +210,7 @@ export const handleUpdateBlogPost = async (req, res) => {
 	}
 
 	try {
-		const updatedPost = await updateBlogPost(
+		const updatedPost = await updatePost(
 			postId,
 			{ title, description, body, tags, category },
 			userId
@@ -236,7 +228,7 @@ export const handleUpdateBlogPost = async (req, res) => {
 	}
 };
 
-export const handleDeleteBlogPost = async (req, res) => {
+export const handleDeletePost = async (req, res) => {
 	const postId = req.params.postId;
 
 	if (!postId) {
@@ -244,7 +236,7 @@ export const handleDeleteBlogPost = async (req, res) => {
 	}
 
 	try {
-		const isDeleted = await deleteBlogPost(postId, req.user);
+		const isDeleted = await deletePost(postId, req.user);
 
 		if (isDeleted) {
 			return res.json({ message: "Post deleted successfully" });
@@ -260,7 +252,7 @@ export const handleDeleteBlogPost = async (req, res) => {
 	}
 };
 
-export const handleAllBlogPost = async (req, res) => {
+export const handleAllPosts = async (req, res) => {
 	try {
 		let page = Number(req.query.page) || 1;
 		page = page < 1 ? 1 : page;
@@ -269,11 +261,11 @@ export const handleAllBlogPost = async (req, res) => {
 		const searchQuery = req.query.search;
 		const order = req.query.order || "timestamp";
 		const state = req.query.state;
-		const blogPosts = await allBlogPost(page, limit, searchQuery, order, state);
+		const posts = await allPosts(page, limit, searchQuery, order, state);
 
 		res.json({
 			message: "All Blog posts",
-			data: blogPosts,
+			data: posts,
 		});
 	} catch (error) {
 		res.status(error.status || 500);
