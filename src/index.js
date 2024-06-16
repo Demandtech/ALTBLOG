@@ -33,18 +33,18 @@ app.use(
 	})
 );
 
-app.use(express.json());
+//  app.use(express.json());
 app.use(logger);
-app.use(bodyParser.json({ limit: "200mb" }));
+app.use(bodyParser.json({ limit: "50mb" }));
 app.use(
 	bodyParser.urlencoded({
-		limit: "200mb",
+		limit: "50mb",
 		extended: true,
 		parameterLimit: 50000,
 	})
 );
-app.use(express.json({ limit: "200mb" }));
-app.use(express.urlencoded({ limit: "200mb", extended: true }));
+// app.use(express.json({ limit: 52428800 }));
+// app.use(express.urlencoded({ limit: 52428800, extended: true }));
 
 app.use("/uploads", express.static(path.join(dir_name, "uploads")));
 
