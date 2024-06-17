@@ -3,6 +3,7 @@ import {
 	allComments,
 	deleteComment,
 	commentUsers,
+	replyUsers,
 	allCommentReplies,
 	replyComment,
 	deleteCommentReply,
@@ -106,14 +107,12 @@ export const handleAllCommentReplies = async (req, res) => {
 export const handleDeleteCommentReply = async (req, res) => {
 	const { replyId } = req.params;
 
-	console.log(commentId);
-
 	if (!commentId) {
 		return res.status(400).json({ message: "reply id is required" });
 	}
 
 	try {
-		const isDeleted = await deleteComment({ replyId, user: req.user });
+		const isDeleted = await deleteCommentReply({ replyId, user: req.user });
 
 		if (isDeleted) {
 			return res.json({ message: "reply deleted successfully" });
@@ -124,5 +123,17 @@ export const handleDeleteCommentReply = async (req, res) => {
 		res
 			.status(error.status || 500)
 			.json({ message: error.message || "Internal server error! try again" });
+	}
+};
+
+export const handleReplyUsers = async (req, res) => {
+	const { commentId } = req.params;
+
+	try {
+		const users = await replyUsers(commentId);
+
+		res.json({ data: users });
+	} catch (error) {
+		console.log(error);
 	}
 };

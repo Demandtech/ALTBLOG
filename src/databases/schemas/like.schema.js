@@ -31,3 +31,19 @@ export const commentLikeSchema = mongoose.Schema(
 	},
 	{ timestamps: true }
 );
+
+export const ReplyLikeSchema = mongoose.Schema(
+	{
+		reply: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Reply",
+			required: true,
+		},
+		user: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
+	},
+	{ timestamps: true }
+);

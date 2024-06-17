@@ -4,7 +4,7 @@ const commentReplySchema = mongoose.Schema(
 	{
 		comment: {
 			type: mongoose.Schema.Types.ObjectId,
-			ref: "Blog",
+			ref: "Comment",
 			required: true,
 		},
 		text: {

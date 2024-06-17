@@ -6,3 +6,9 @@ export const commentValidation = Joi.object({
 	userId: Joi.string().required(),
 	text: Joi.string().required(),
 });
+
+export const replyCommentValidation = Joi.object({
+	commentId: Joi.string().required(),
+	userId: Joi.string().required(),
+	text: Joi.string().required(),
+})
