@@ -29,7 +29,7 @@ export const createPost = async ({
 	});
 
 	if (post) {
-		throw new ErrorAndStatus("Post title exist, title must be unique", 400);
+		throw new ErrorAndStatus("Post title exist, title must be unique", 409);
 	}
 
 	const reading_time = await calculateReadingTime(body);
@@ -51,6 +51,9 @@ export const createPost = async ({
 			path: "author",
 			select: "-password -__v -updatedAt -createdAt",
 		});
+
+		newPost.toObject();
+		newPost.read_count = 0;
 
 		return newPost;
 	} catch (error) {
@@ -142,6 +145,7 @@ export const allPublishedPost = async ({
 				const postComments = await commentModel.find({ post: post._id });
 				const likeCount = postLikes.length || 0;
 				const commentCount = postComments.length || 0;
+				const read_count = await viewModel.countDocuments({ postId: post._id });
 				let isLiked = false;
 				let isBookmarked = false;
 
@@ -157,7 +161,14 @@ export const allPublishedPost = async ({
 					isBookmarked = bookmarkePostId.has(post._id.toString());
 					isLiked = likePostId.has(post._id.toString());
 				}
-				return { ...post, likeCount, commentCount, isLiked, isBookmarked };
+				return {
+					...post,
+					likeCount,
+					commentCount,
+					isLiked,
+					isBookmarked,
+					read_count,
+				};
 			})
 		);
 		const result = {
@@ -269,6 +280,7 @@ export const authorPosts = async ({
 				const postComments = await commentModel.find({ post: post._id });
 				const likeCount = postLikes.length;
 				const commentCount = postComments.length;
+				const read_count = await viewModel.countDocuments({ postId: post._id });
 				let isLiked = false;
 				let isBookmarked = false;
 
@@ -284,7 +296,14 @@ export const authorPosts = async ({
 					isBookmarked = bookmarkePostId.has(post._id.toString());
 					isLiked = likePostId.has(post._id.toString());
 				}
-				return { ...post, likeCount, commentCount, isLiked, isBookmarked };
+				return {
+					...post,
+					likeCount,
+					commentCount,
+					isLiked,
+					isBookmarked,
+					read_count,
+				};
 			})
 		);
 
@@ -330,7 +349,7 @@ export const singlePost = async ({ postId, userId, userIp }) => {
 		}
 		let read_count = await viewModel.countDocuments({ postId });
 
-		if (post.author._id.toString() !== userId) {
+		if (post.author._id.toString() !== userId && post.state === "PUBLISHED") {
 			const alreadyView = await viewModel.findOne({ userIp, postId });
 
 			if (!alreadyView) {
@@ -383,10 +402,19 @@ export const singlePost = async ({ postId, userId, userIp }) => {
 
 export const featuredPost = async () => {
 	try {
-		const featured = await postModel.find({ featured: true }).populate({
-			path: "author",
-			select: "-password -__v -updatedAt -createdAt",
-		});
+		let featured = await postModel
+			.find({ featured: true })
+			.populate({
+				path: "author",
+				select: "-password -__v -updatedAt -createdAt",
+			})
+			.lean();
+		featured = await Promise.all(
+			featured.map(async (post) => {
+				const read_count = await viewModel.countDocuments({ postId: post._id });
+				return { ...post, read_count };
+			})
+		);
 
 		return featured;
 	} catch (error) {
@@ -649,7 +677,7 @@ export const allPosts = async (
 				break;
 		}
 
-		const posts = await postModel
+		let posts = await postModel
 			.find(filter, { __v: 0 })
 			.sort(sortOptions)
 			.skip(skip)
@@ -657,12 +685,21 @@ export const allPosts = async (
 			.populate({
 				path: "author",
 				select: "-password",
-			});
+			})
+			.lean();
+
 		const total_items = await postModel.countDocuments(filter);
 
 		const last_page = Math.ceil(total_items / limit);
 
 		const first_item = last_page > 0 ? skip + 1 : 0;
+
+		posts = await Promise.all(
+			posts.map(async (post) => {
+				const read_count = await viewModel.countDocuments({ postId: post._id });
+				return { ...post, read_count };
+			})
+		);
 
 		return {
 			meta: {

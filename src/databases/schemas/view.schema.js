@@ -9,6 +9,7 @@ const viewSchema = mongoose.Schema({
 	view: {
 		type: Number,
 		require: true,
+		default: 0,
 	},
 	userIp: {
 		type: String,
