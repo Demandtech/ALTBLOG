@@ -10,6 +10,7 @@ import logger from "./middlewares/logger.middleware.js";
 import cors from "cors";
 import path from "path";
 import likeRoute from "./routes/like.route.js";
+// import ipMiddleware from "./middlewares/getip.middleware.js";
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use(
 		parameterLimit: 50000,
 	})
 );
+// app.use(ipMiddleware);
 // app.use(express.json({ limit: 52428800 }));
 // app.use(express.urlencoded({ limit: 52428800, extended: true }));
 

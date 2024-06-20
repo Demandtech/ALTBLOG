@@ -12,6 +12,7 @@ import {
 	relatedPosts,
 } from "../services/post.service.js";
 
+
 export const handleCreatePost = async (req, res) => {
 	const { title, body, tags, description, category } = req.body;
 
@@ -116,6 +117,8 @@ export const handleSinglePost = async (req, res) => {
 	const postId = req.params.postId;
 	const authorization = req.headers.authorization;
 
+	const userIp = req.ip;
+
 	if (!postId) {
 		return res.status(400).json({ message: "Post id param is required!" });
 	}
@@ -123,7 +126,7 @@ export const handleSinglePost = async (req, res) => {
 	try {
 		let authId = checkAuthenticate(authorization);
 
-		const post = await singlePost(postId, authId);
+		const post = await singlePost({ postId, authId, userIp });
 
 		if (!post) {
 			return res.status(404).json({ message: "Blog post not found!" });

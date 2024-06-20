@@ -23,6 +23,7 @@ import {
 	handlebookmarkPost,
 	handleBookmarkList,
 } from "../controllers/bookmark.controller.js";
+// import ipMiddleware from "../middlewares/getip.middleware.js";
 
 const blogRoute = Router();
 
@@ -33,11 +34,7 @@ blogRoute.get("/authors/:id", handleAuthorPosts);
 
 // AUTH MIDDLEWARE
 blogRoute.use(authMiddleware);
-blogRoute.post(
-	"/",
-	validateMiddleware(createPostSchema),
-	handleCreatePost
-);
+blogRoute.post("/", validateMiddleware(createPostSchema), handleCreatePost);
 blogRoute.put(
 	"/:postId",
 	validateMiddleware(updatePostSchema),

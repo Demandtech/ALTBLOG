@@ -1,7 +1,4 @@
 import mongoose from "mongoose";
-import bookmarkSchema from "./bookmark.schema.js";
-import commentSchema from "./comment.schema.js";
-import { postLikeSchema } from "./like.schema.js";
 
 const postSchema = mongoose.Schema(
 	{
@@ -38,11 +35,6 @@ const postSchema = mongoose.Schema(
 			enum: ["DRAFT", "PUBLISHED"],
 			default: "DRAFT",
 		},
-		read_count: {
-			type: Number,
-			default: 0,
-			required: true,
-		},
 		reading_time: {
 			type: Number,
 			default: 0,
@@ -59,16 +51,5 @@ const postSchema = mongoose.Schema(
 
 	{ timestamps: true }
 );
-
-postSchema.pre("remove", function (next) {
-	console.log("CALLED");
-	try {
-		// await postLikeSchema.deleteMany({ post: this._id });
-		postLikeSchema.remove({ post: this._id }).exec();
-		next();
-	} catch (err) {
-		next(err);
-	}
-});
 
 export default postSchema;

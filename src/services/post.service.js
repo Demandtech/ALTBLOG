@@ -6,6 +6,7 @@ import { postLikeModel } from "../databases/models/like.model.js";
 import bookmarkModel from "../databases/models/bookmark.model.js";
 import { redisClient } from "../server.js";
 import commentModel from "../databases/models/comment.model.js";
+import viewModel from "../databases/models/view.model.js";
 
 // import { postLikeSchema } from "../databases/schemas/like.schema.js";
 // import bookmarkSchema from "../databases/schemas/bookmark.schema.js";
@@ -306,7 +307,7 @@ export const authorPosts = async ({
 	}
 };
 
-export const singlePost = async (postId, userId) => {
+export const singlePost = async ({ postId, userId, userIp }) => {
 	if (!postId) {
 		throw new ErrorAndStatus("Post id is required", 400);
 	}
@@ -327,10 +328,15 @@ export const singlePost = async (postId, userId) => {
 		if (!post) {
 			throw new ErrorAndStatus("Post not found", 404);
 		}
+		let read_count = await viewModel.countDocuments({ postId });
 
 		if (post.author._id.toString() !== userId) {
-			post.read_count += 1;
-			await post.save();
+			const alreadyView = await viewModel.findOne({ userIp, postId });
+
+			if (!alreadyView) {
+				await viewModel.create({ userIp, postId, view: read_count + 1 });
+				read_count += 1;
+			}
 		}
 
 		const [postLikes, postComments] = await Promise.all([
@@ -360,6 +366,7 @@ export const singlePost = async (postId, userId) => {
 
 		const response = {
 			...singPost,
+			read_count,
 			likeCount,
 			isLiked,
 			isBookmarked,

@@ -88,7 +88,7 @@ export const allComments = async ({ postId, userId, page }) => {
 
 		const result = { hasMore, comments: response };
 
-		console.log(result);
+		// console.log(result);
 
 		return { message: "All Post comments", data: result };
 	} catch (error) {

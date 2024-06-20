@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const bookmarkSchema = mongoose.Schema({
 	post: {
 		type: mongoose.Schema.Types.ObjectId,
-		ref: "Blog",
+		ref: "Post",
 		required: true,
 	},
 	user: {
