@@ -6,7 +6,7 @@ import {
 	replyLikeModel,
 } from "../databases/models/like.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
-import commentReplyModel from "../databases/models/commentReply.model.js";
+import replyModel from "../databases/models/reply.model.js";
 
 export const likePost = async ({ userId, postId }) => {
 	const post = await blogModel.findById(postId);
@@ -104,8 +104,8 @@ export const likePostUsers = async (postId) => {
 	}
 };
 
-export const likeCommentReply = async ({ userId, replyId }) => {
-	const reply = await commentReplyModel.findById(replyId);
+export const likeReply = async ({ userId, replyId }) => {
+	const reply = await replyModel.findById(replyId);
 
 	console.log({ userId, replyId });
 

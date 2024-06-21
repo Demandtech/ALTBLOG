@@ -10,7 +10,7 @@ import logger from "./middlewares/logger.middleware.js";
 import cors from "cors";
 import path from "path";
 import likeRoute from "./routes/like.route.js";
-// import ipMiddleware from "./middlewares/getip.middleware.js";
+import replyRoute from "./routes/reply.route.js";
 
 dotenv.config();
 
@@ -34,7 +34,6 @@ app.use(
 	})
 );
 
-//  app.use(express.json());
 app.use(logger);
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(
@@ -44,9 +43,6 @@ app.use(
 		parameterLimit: 50000,
 	})
 );
-// app.use(ipMiddleware);
-// app.use(express.json({ limit: 52428800 }));
-// app.use(express.urlencoded({ limit: 52428800, extended: true }));
 
 app.use("/uploads", express.static(path.join(dir_name, "uploads")));
 
@@ -55,6 +51,7 @@ app.use("/api/posts", blogRoute);
 app.use("/api/users", userRoute);
 app.use("/api/comments", commentRoute);
 app.use("/api/likes", likeRoute);
+app.use("/api/replies", replyRoute);
 
 app.get("/", (req, res) => {
 	res.send("Welcome to Blogshot Api");
