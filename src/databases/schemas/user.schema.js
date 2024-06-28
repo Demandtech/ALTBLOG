@@ -45,6 +45,10 @@ const userSchema = mongoose.Schema(
 			type: String,
 			trim: true,
 		},
+		theme: {
+			type: Boolean,
+			default: false,
+		},
 		country: {
 			type: Object,
 		},

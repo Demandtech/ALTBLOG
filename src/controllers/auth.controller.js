@@ -1,4 +1,4 @@
-import { register, login } from "../services/auth.service.js";
+import { register, login, changePassword } from "../services/auth.service.js";
 
 export const handleRegister = async (req, res) => {
 	try {
@@ -30,6 +30,29 @@ export const handleLogin = async (req, res) => {
 		res.json({ message: "Login succesful", data: { token, user } });
 	} catch (error) {
 		res.status(error.status || 500);
-		res.json({ message: error?.message || "Internal Error" });
+		res.json({ message: error?.message || "Internal server Error!" });
+	}
+};
+
+export const handleChangePassword = async (req, res) => {
+	const { currentPassword, newPassword } = req.body;
+	const userId = req.user._id;
+
+	console.log({userId, currentPassword, newPassword})
+
+	try {
+		const result = await changePassword({
+			currentPassword,
+			newPassword,
+			userId,
+		});
+
+		console.log(result)
+
+		res.status(200).json({ data: result });
+	} catch (error) {
+		res
+			.status(error.status || 500)
+			.json({ message: error.message || "Internal server error!" });
 	}
 };

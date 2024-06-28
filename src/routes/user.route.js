@@ -5,6 +5,7 @@ import {
 	handleUpdateUser,
 	handleUpdateUserPhotos,
 	handleAuthUser,
+	handleUpdateUserTheme,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/file.middleware.js";
 import { validateMiddleware } from "../middlewares/validation.middleware.js";
@@ -19,15 +20,17 @@ const userRoute = Router();
 // userRoute.use(authMiddleware);
 userRoute.get("/me", authMiddleware, handleAuthUser);
 userRoute.get("/:id", handleUser);
+
+userRoute.use(authMiddleware);
 userRoute.put(
 	"/",
 	validateMiddleware(updateUserDetailsSchema),
-	authMiddleware,
+
 	handleUpdateUser
 );
 userRoute.post(
 	"/photos",
-	authMiddleware,
+
 	validateMiddleware(updateUserPhotoSchema),
 	upload.fields([
 		{ name: "avatar", maxCount: 1 },
@@ -35,4 +38,5 @@ userRoute.post(
 	]),
 	handleUpdateUserPhotos
 );
+userRoute.patch("/theme", handleUpdateUserTheme);
 export default userRoute;

@@ -84,3 +84,44 @@ export const login = async (email, password) => {
 		throw new ErrorAndStatus(error?.message, error.status || 500);
 	}
 };
+
+export const changePassword = async ({
+	currentPassword,
+	newPassword,
+	userId,
+}) => {
+	if (!userId || !newPassword || !currentPassword)
+		throw new ErrorAndStatus("Check required data", 400);
+
+	try {
+		const user = await UserModel.findById(userId);
+
+		if (!user) throw new ErrorAndStatus("user not found", 404);
+
+		const isPasswordMatch = await bcrypt.compare(
+			currentPassword,
+			user.password
+		);
+		const isTheSamePassword = await bcrypt.compare(newPassword, user.password);
+		if (!isPasswordMatch)
+			throw new ErrorAndStatus("current password is incorrect", 400);
+
+		if (isTheSamePassword)
+			throw new ErrorAndStatus(
+				"use a different password, from your old password",
+				400
+			);
+
+		const password = await bcrypt.hash(newPassword, 10);
+
+		user.password = password;
+		await user.save();
+
+		return { message: "Password changed successfully" };
+	} catch (error) {
+		throw new ErrorAndStatus(
+			error.message || "Internal server error",
+			error.status || 500
+		);
+	}
+};

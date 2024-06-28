@@ -3,6 +3,7 @@ import {
 	updateUser,
 	updateUserPhotos,
 	authUser,
+	updateUserTheme,
 } from "../services/user.service.js";
 import Jwt from "jsonwebtoken";
 import path from "path";
@@ -152,4 +153,16 @@ export const handleAuthUser = async (req, res) => {
 	// console.log(user);
 
 	res.json({ message: "Login User", data: user });
+};
+
+export const handleUpdateUserTheme = async (req, res) => {
+	const { theme } = req.body;
+	const userId = req.user._id;
+
+	try {
+		const updatedUser = await updateUserTheme({ theme, userId });
+		res.status(200).json(updatedUser);
+	} catch (error) {
+		res.status(error.status || 500).json({ message: error.message });
+	}
 };

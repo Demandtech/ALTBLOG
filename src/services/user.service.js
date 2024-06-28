@@ -5,11 +5,9 @@ import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 import { postLikeModel } from "../databases/models/like.model.js";
 import { redisClient } from "../server.js";
 
-
 export const user = async (userId, authId) => {
 	if (!userId) throw new ErrorAndStatus("User id is required", 400);
 
-	
 	try {
 		// const cacheKey = `user:${userId}:${authId}`;
 		// const cacheData = await redisClient.get(cacheKey);
@@ -29,9 +27,9 @@ export const user = async (userId, authId) => {
 			.find()
 			.populate({ path: "post" })
 			.lean();
-       
+
 		totalLikes = totalLikes.filter((likes) => {
-			console.log(likes)
+			console.log(likes);
 			return likes?.post?.author.toString() === userId;
 		}).length;
 
@@ -110,7 +108,7 @@ export const user = async (userId, authId) => {
 			user,
 		};
 	} catch (error) {
-		console.log(error)
+		console.log(error);
 		throw new ErrorAndStatus(
 			error.message || "Internal Error, try again later!",
 			error.status || 500
@@ -174,5 +172,23 @@ export const authUser = async (userId) => {
 		return user;
 	} catch (error) {
 		console.log(error);
+	}
+};
+
+export const updateUserTheme = async ({ theme, userId }) => {
+	if (!userId) throw new ErrorAndStatus("Id is required!", 400);
+
+	try {
+		const user = await UserModel.findById(userId);
+
+		if (!user) throw new ErrorAndStatus("User not found", 404);
+
+		user.theme = theme;
+
+		await user.save();
+
+		return user;
+	} catch (error) {
+		throw ErrorAndStatus("An error occured!", 500);
 	}
 };
