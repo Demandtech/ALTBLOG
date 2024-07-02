@@ -20,7 +20,7 @@ const userSchema = mongoose.Schema(
 		},
 		password: {
 			type: String,
-			required: true,
+			// required: true,
 			trim: true,
 		},
 		role: {
@@ -30,7 +30,7 @@ const userSchema = mongoose.Schema(
 		},
 		profession: {
 			type: String,
-			required: true,
+			// required: true,
 			trim: true,
 		},
 		dob: {
@@ -77,6 +77,14 @@ const userSchema = mongoose.Schema(
 		},
 		linkedin: {
 			type: String,
+		},
+		googleId: {
+			type: String,
+			unique: true,
+		},
+		linkedinId: {
+			type: String,
+			unique: true,
 		},
 	},
 	{ timestamps: true }

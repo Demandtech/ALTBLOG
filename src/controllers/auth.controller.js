@@ -25,9 +25,9 @@ export const handleLogin = async (req, res) => {
 	const { email, password } = req.body;
 
 	try {
-		const { token, user } = await login(email, password);
+		const result = await login(email, password);
 
-		res.json({ message: "Login succesful", data: { token, user } });
+		res.json({ data: result });
 	} catch (error) {
 		res.status(error.status || 500);
 		res.json({ message: error?.message || "Internal server Error!" });
@@ -38,7 +38,7 @@ export const handleChangePassword = async (req, res) => {
 	const { currentPassword, newPassword } = req.body;
 	const userId = req.user._id;
 
-	console.log({userId, currentPassword, newPassword})
+	console.log({ userId, currentPassword, newPassword });
 
 	try {
 		const result = await changePassword({
@@ -47,7 +47,7 @@ export const handleChangePassword = async (req, res) => {
 			userId,
 		});
 
-		console.log(result)
+		console.log(result);
 
 		res.status(200).json({ data: result });
 	} catch (error) {

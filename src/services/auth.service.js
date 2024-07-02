@@ -2,6 +2,7 @@ import UserModel from "../databases/models/user.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 import bcrypt from "bcrypt";
 import Jwt from "jsonwebtoken";
+import generateJWT from "../helpers/generateToken.js";
 
 export const register = async ({
 	email,
@@ -63,23 +64,9 @@ export const login = async (email, password) => {
 
 		const jwtSec = process.env.JWT_SECRET || "secret";
 
-		const token = Jwt.sign(
-			{
-				role: user?.role || "USER",
-				email: user.email,
-				_id: user._id,
-				sub: user._id,
-				name: user.first_name,
-			},
-			jwtSec,
-			{ expiresIn: "30d" }
-		);
-		user = user.toObject();
+		const token = generateJWT(user, jwtSec);
 
-		delete user.password;
-		delete user.__v;
-
-		return { token };
+		return { token, message: `Welcome back ${user.first_name}!` };
 	} catch (error) {
 		throw new ErrorAndStatus(error?.message, error.status || 500);
 	}
