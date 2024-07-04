@@ -94,10 +94,8 @@ export const handleUpdateUser = async (req, res) => {
 
 export const handleUpdateUserPhotos = async (req, res) => {
 	try {
-		console.log(req.files);
 		const { avatar, banner_image } = req.files || {};
-		// const avatarPath = req?.files["avatar"][0]?.path;
-		// const bannerImagePath = req?.files["banner_image"][0]?.path;
+
 		let avatarPath;
 		if (avatar) {
 			avatarPath = avatar.length > 0 ? avatar[0].path : null;

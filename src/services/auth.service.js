@@ -48,8 +48,8 @@ export const register = async ({
 };
 
 export const login = async (email, password) => {
-	if ((!email, !password)) {
-		throw new ErrorAndStatus("All fields are required", 401);
+	if (!email || !password) {
+		throw new ErrorAndStatus("All fields are required", 400);
 	}
 	try {
 		let user = await UserModel.findOne({ email });
@@ -58,7 +58,21 @@ export const login = async (email, password) => {
 			throw new ErrorAndStatus("Username or Password is incorrect", 401);
 		}
 
-		if (!(await bcrypt.compare(password, user.password))) {
+		if (user.googleId)
+			throw new ErrorAndStatus(
+				"Email registered with google, please try to login with google!",
+				401
+			);
+
+		if (user.linkedId)
+			throw new ErrorAndStatus(
+				"Email registered with linkedin, please try to login with linkedin!",
+				401
+			);
+
+		const passwordMatch = await bcrypt.compare(password, user.password);
+		
+		if (!passwordMatch) {
 			throw new ErrorAndStatus("Username or Password is incorrect", 401);
 		}
 

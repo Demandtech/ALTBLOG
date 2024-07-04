@@ -147,7 +147,6 @@ export const updateUserPhotos = async ({
 
 		if (!user) throw new ErrorAndStatus("User not found", 404);
 
-		// Object.assign(user, { banner_image: bannerUrl, avatar: avatarUrl });
 		user.banner_image = bannerUrl || user.banner_image; // Update only if provided
 		user.avatar = avatarUrl || user.avatar;
 
