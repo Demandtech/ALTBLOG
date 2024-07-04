@@ -100,41 +100,32 @@ export const handleUpdateUserPhotos = async (req, res) => {
 		if (avatar) {
 			avatarPath = avatar.length > 0 ? avatar[0].path : null;
 		}
-		let bannerImagePath;
+		let bannerPath;
 		if (banner_image) {
-			bannerImagePath = banner_image.length > 0 ? banner_image[0].path : null;
+			bannerPath = banner_image.length > 0 ? banner_image[0].path : null;
 		}
 
 		const userId = req.user._id;
 
-		const avatarUrl = avatarPath
-			? `${req.protocol}://${req.get("host")}/uploads/avatars/${path.basename(
-					avatarPath
-			  )}`
-			: null;
-		const bannerUrl = bannerImagePath
-			? `${req.protocol}://${req.get(
-					"host"
-			  )}/uploads/banner_images/${path.basename(bannerImagePath)}`
-			: null;
-		const uploadedData = {
-			userId,
-		};
+		const uploadedData = {};
 
-		if (avatarUrl) {
-			uploadedData.avatarUrl = avatarUrl;
+		if (userId) {
+			uploadedData.userId = userId;
 		}
 
-		if (bannerUrl) {
-			uploadedData.bannerUrl = bannerUrl;
+		if (avatarPath) {
+			uploadedData.avatarPath = avatarPath;
 		}
 
-		// const result = await updateUserPhotos({ avatarUrl, bannerUrl, userId });
+		if (bannerPath) {
+			uploadedData.bannerPath = bannerPath;
+		}
+
 		const result = await updateUserPhotos(uploadedData);
 
 		res.json({ message: "Photos uploaded successfully", data: result });
 	} catch (error) {
-		console.log("Line-117", error.message);
+		console.log(error.message);
 		return res.status(error.status || 500).json({ error: error.message });
 	}
 };

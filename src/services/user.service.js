@@ -4,6 +4,7 @@ import UserModel from "../databases/models/user.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 import { postLikeModel } from "../databases/models/like.model.js";
 import { redisClient } from "../server.js";
+import uploadToCloudinary from "../helpers/uploadToCloudinary.js";
 
 export const user = async (userId, authId) => {
 	if (!userId) throw new ErrorAndStatus("User id is required", 400);
@@ -135,20 +136,36 @@ export const updateUser = async (userId, newUser) => {
 };
 
 export const updateUserPhotos = async ({
-	avatarUrl = null,
-	bannerUrl = null,
+	avatarPath = null,
+	bannerPath = null,
 	userId,
 }) => {
 	if (!userId) throw new ErrorAndStatus("Id is required!", 400);
-	if (!avatarUrl && !bannerUrl)
+	if (!avatarPath && !bannerPath)
 		throw new ErrorAndStatus("Id is required!", 400);
 	try {
 		const user = await UserModel.findById(userId);
 
 		if (!user) throw new ErrorAndStatus("User not found", 404);
 
-		user.banner_image = bannerUrl || user.banner_image; // Update only if provided
-		user.avatar = avatarUrl || user.avatar;
+		if (avatarPath) {
+			const avatarUrl = await uploadToCloudinary(
+				avatarPath,
+				`avatar_${userId}`
+			);
+			user.avatar = avatarUrl;
+		}
+
+		if (bannerPath) {
+			const bannerUrl = await uploadToCloudinary(
+				bannerPath,
+				`banner_${userId}`
+			);
+			user.banner = bannerUrl;
+		}
+
+		// user.banner_image = bannerPath || user.banner_image; // Update only if provided
+		// user.avatar = avatarPath || user.avatar;
 
 		await user.save();
 

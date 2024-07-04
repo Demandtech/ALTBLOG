@@ -52,7 +52,7 @@ const userSchema = mongoose.Schema(
 		country: {
 			type: Object,
 		},
-		banner_image: {
+		banner: {
 			type: String,
 			default:
 				"https://www.beautylabinternational.com/wp-content/uploads/2020/03/Hero-Banner-Placeholder-Light-1024x480-1.png",
