@@ -169,6 +169,7 @@ export const updateUserPhotos = async ({
 
 		return user;
 	} catch (error) {
+		console.log(error)
 		throw new ErrorAndStatus(error.message || "An error occured!", 500);
 	}
 };

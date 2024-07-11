@@ -129,7 +129,7 @@ export const handleUpdateUserPhotos = async (req, res) => {
 
 		res.json({ message: "Photos uploaded successfully", data: result });
 	} catch (error) {
-		console.log(error.message);
+		console.log(error);
 		return res.status(error.status || 500).json({ error: error.message });
 	}
 };

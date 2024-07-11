@@ -37,46 +37,46 @@ export const register = async ({
 		delete newUser.password;
 
 		return newUser;
-
 	} catch (error) {
 		throw new ErrorAndStatus(error?.message, error.status || 500);
 	}
 };
 
 export const login = async (email, password) => {
-	try {
-		let user = await UserModel.findOne({ email });
+    try {
+        let user = await UserModel.findOne({ email });
 
-		if (!user) {
-			throw new ErrorAndStatus("Username or Password is incorrect", 401);
-		}
+        if (!user) {
+            throw new ErrorAndStatus("Username or password is incorrect", 401);
+        }
 
-		// if (user.googleId)
-		// 	throw new ErrorAndStatus(
-		// 		"Email registered with google, please try to login with google!",
-		// 		401
-		// 	);
+        if (user.password) {
+            const passwordMatch = await bcrypt.compare(password, user.password);
 
-		// if (user.linkedId)
-		// 	throw new ErrorAndStatus(
-		// 		"Email registered with linkedin, please try to login with linkedin!",
-		// 		401
-		// 	);
+            if (!passwordMatch) {
+                throw new ErrorAndStatus("Username or password is incorrect", 401);
+            }
 
-		const passwordMatch = await bcrypt.compare(password, user.password);
+        } else if (user.googleId && user.linkedId) {
 
-		if (!passwordMatch) {
-			throw new ErrorAndStatus("Username or Password is incorrect", 401);
-		}
+            throw new ErrorAndStatus("User registered with both Google and LinkedIn", 401);
+        } else if (user.googleId) {
 
-		const jwtSec = process.env.JWT_SECRET || "secret";
+            throw new ErrorAndStatus("User registered with Google", 401);
+        } else if (user.linkedId) {
+			
+            throw new ErrorAndStatus("User registered with LinkedIn", 401);
+        }
 
-		const token = generateJWT(user, jwtSec);
+        const jwtSec = process.env.JWT_SECRET || "secret";
 
-		return { token, message: `Welcome back ${user.first_name}!` };
-	} catch (error) {
-		throw new ErrorAndStatus(error?.message, error.status || 500);
-	}
+        const token = generateJWT(user, jwtSec);
+
+        return { token, message: `Welcome back ${user.first_name}!` };
+    } catch (error) {
+        console.error(error);
+        throw new ErrorAndStatus(error?.message, error.status || 500);
+    }
 };
 
 export const changePassword = async ({
@@ -99,7 +99,6 @@ export const changePassword = async ({
 		if (!isPasswordMatch)
 			throw new ErrorAndStatus("current password is incorrect", 400);
 
-
 		if (isTheSamePassword)
 			throw new ErrorAndStatus(
 				"use a different password, from your old password",
@@ -113,7 +112,6 @@ export const changePassword = async ({
 		await user.save();
 
 		return { message: "Password changed successfully" };
-		
 	} catch (error) {
 		throw new ErrorAndStatus(
 			error.message || "Internal server error",
