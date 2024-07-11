@@ -37,9 +37,10 @@ const uploadToCloudinary = async (filePath, public_id, folder) => {
 			if (error) {
 				console.log(error);
 				return reject(error);
-			} else {
-				fs.unlinkSync(filePath);
 			}
+			// else {
+			// 	fs.unlinkSync(filePath);
+			// }
 			resolve(result.secure_url);
 		});
 	});

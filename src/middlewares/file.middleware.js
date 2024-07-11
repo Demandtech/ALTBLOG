@@ -2,6 +2,7 @@ import multer from "multer";
 import path from "path";
 import { dir_name } from "../index.js";
 
+
 const imageFilter = function (_, file, cb) {
 	const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
 	if (allowedMimeTypes.includes(file.mimetype)) {
@@ -23,6 +24,8 @@ const mediaStorage = multer.diskStorage({
 		cb(null, name);
 	},
 });
+
+// const mediaStorage = 
 
 export const upload = multer({
 	storage: mediaStorage,
