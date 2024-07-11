@@ -201,8 +201,6 @@ export const updateUserPhotos = async ({
 				"banners"
 			);
 			user.banner = bannerUrl;
-		} else {
-			user.banner = null;
 		}
 
 		await user.save();

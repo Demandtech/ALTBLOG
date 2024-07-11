@@ -6,7 +6,6 @@ import {
 	updateUserTheme,
 } from "../services/user.service.js";
 import Jwt from "jsonwebtoken";
-import path from "path";
 
 export const handleUser = async (req, res) => {
 	const authorization = req.headers.authorization;
@@ -95,44 +94,6 @@ export const handleUpdateUser = async (req, res) => {
 	}
 };
 
-// export const handleUpdateUserPhotos = async (req, res) => {
-// 	try {
-// 		const { avatar, banner} = req.files || {};
-
-// 		let avatarPath;
-// 		if (avatar) {
-// 			avatarPath = avatar.length > 0 ? avatar[0].path : null;
-// 		}
-// 		let bannerPath;
-// 		if (banner) {
-// 			bannerPath = banner.length > 0 ? banner[0].path : null;
-// 		}
-
-// 		const userId = req.user._id;
-
-// 		const uploadedData = {};
-
-// 		if (userId) {
-// 			uploadedData.userId = userId;
-// 		}
-
-// 		if (avatarPath) {
-// 			uploadedData.avatarPath = avatarPath;
-// 		}
-
-// 		if (bannerPath) {
-// 			uploadedData.bannerPath = bannerPath;
-// 		}
-
-// 		const result = await updateUserPhotos(uploadedData);
-
-// 		res.json({ message: "Photos uploaded successfully", data: result });
-// 	} catch (error) {
-// 		console.log(error);
-// 		return res.status(error.status || 500).json({ error: error.message });
-// 	}
-// };
-
 export const handleUpdateUserPhotos = async (req, res) => {
 	try {
 		const { avatar, banner } = req.files || {};
@@ -147,18 +108,6 @@ export const handleUpdateUserPhotos = async (req, res) => {
 			avatarBuffer,
 			bannerBuffer,
 		};
-
-		// if (userId) {
-		// 	uploadedData.userId = userId;
-		// }
-
-		// if (avatarPath) {
-		// 	uploadedData.avatarPath = avatarPath;
-		// }
-
-		// if (bannerPath) {
-		// 	uploadedData.bannerPath = bannerPath;
-		// }
 
 		const result = await updateUserPhotos(uploadedData);
 

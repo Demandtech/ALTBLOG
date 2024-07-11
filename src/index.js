@@ -44,8 +44,6 @@ app.use(
 	})
 );
 
-app.use("/uploads", express.static(path.join(dir_name, "uploads")));
-
 app.use("/api/auth", authRoute);
 app.use("/api/posts", blogRoute);
 app.use("/api/users", userRoute);

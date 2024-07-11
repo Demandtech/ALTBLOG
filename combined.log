@@ -16543,3 +16543,8 @@ GET /me 200 52ms - Request size: unknown bytes 2024-07-11T11:44:20.299Z
 GET /authors/6686e73c3443b759ded00e5c/?page=1&order=&limit=5&state=&search=&category= 304 57ms - Request size: unknown bytes 2024-07-11T11:44:20.476Z
 GET /6686e73c3443b759ded00e5c 200 83ms - Request size: unknown bytes 2024-07-11T11:44:20.483Z
 GET /authors/6686e73c3443b759ded00e5c/?page=1&order=&limit=5&state=&search=&category= 304 40ms - Request size: unknown bytes 2024-07-11T11:44:20.803Z
+POST /photos 200 9586ms - Request size: 448732 bytes 2024-07-11T11:52:24.732Z
+GET /me 200 58ms - Request size: unknown bytes 2024-07-11T11:52:24.818Z
+GET /authors/6686e73c3443b759ded00e5c/?page=1&order=&limit=5&state=&search=&category= 304 79ms - Request size: unknown bytes 2024-07-11T11:52:25.075Z
+GET /6686e73c3443b759ded00e5c 200 197ms - Request size: unknown bytes 2024-07-11T11:52:25.174Z
+GET /authors/6686e73c3443b759ded00e5c/?page=1&order=&limit=5&state=&search=&category= 304 34ms - Request size: unknown bytes 2024-07-11T11:52:25.526Z
