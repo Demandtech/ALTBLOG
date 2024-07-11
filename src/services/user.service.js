@@ -133,9 +133,49 @@ export const updateUser = async (userId, newUser) => {
 	}
 };
 
+// export const updateUserPhotos = async ({
+// 	avatarPath = null,
+// 	bannerPath = null,
+// 	userId,
+// }) => {
+// 	if (!userId) throw new ErrorAndStatus("Id is required!", 400);
+
+// 	try {
+// 		const user = await UserModel.findById(userId);
+
+// 		if (!user) throw new ErrorAndStatus("User not found", 404);
+
+// 		if (avatarPath) {
+// 			const avatarUrl = await uploadToCloudinary(
+// 				avatarPath,
+// 				`avatar_${userId}`,
+// 				"avatars"
+// 			);
+// 			user.avatar = avatarUrl;
+// 		}
+
+// 		if (bannerPath) {
+// 			const bannerUrl = await uploadToCloudinary(
+// 				bannerPath,
+// 				`banner_${userId}`,
+// 				"banners"
+// 			);
+// 			user.banner = bannerUrl;
+// 		} else {
+// 			user.banner = null;
+// 		}
+
+// 		await user.save();
+
+// 		return user;
+// 	} catch (error) {
+
+// 		throw new ErrorAndStatus(error.message || "An error occured!", 500);
+// 	}
+// };
 export const updateUserPhotos = async ({
-	avatarPath = null,
-	bannerPath = null,
+	avatarBuffer,
+	bannerBuffer,
 	userId,
 }) => {
 	if (!userId) throw new ErrorAndStatus("Id is required!", 400);
@@ -145,18 +185,18 @@ export const updateUserPhotos = async ({
 
 		if (!user) throw new ErrorAndStatus("User not found", 404);
 
-		if (avatarPath) {
+		if (avatarBuffer) {
 			const avatarUrl = await uploadToCloudinary(
-				avatarPath,
+				avatarBuffer,
 				`avatar_${userId}`,
 				"avatars"
 			);
 			user.avatar = avatarUrl;
-		} 
+		}
 
-		if (bannerPath) {
+		if (bannerBuffer) {
 			const bannerUrl = await uploadToCloudinary(
-				bannerPath,
+				bannerBuffer,
 				`banner_${userId}`,
 				"banners"
 			);
@@ -169,7 +209,6 @@ export const updateUserPhotos = async ({
 
 		return user;
 	} catch (error) {
-		console.log(error)
 		throw new ErrorAndStatus(error.message || "An error occured!", 500);
 	}
 };

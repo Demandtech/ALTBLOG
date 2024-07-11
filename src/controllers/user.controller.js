@@ -87,7 +87,6 @@ export const handleUpdateUser = async (req, res) => {
 			message: "Profile updated successfully!",
 			user: updatedUser,
 		});
-		
 	} catch (error) {
 		res.status(error.status || 500).json({
 			message:
@@ -96,34 +95,70 @@ export const handleUpdateUser = async (req, res) => {
 	}
 };
 
+// export const handleUpdateUserPhotos = async (req, res) => {
+// 	try {
+// 		const { avatar, banner} = req.files || {};
+
+// 		let avatarPath;
+// 		if (avatar) {
+// 			avatarPath = avatar.length > 0 ? avatar[0].path : null;
+// 		}
+// 		let bannerPath;
+// 		if (banner) {
+// 			bannerPath = banner.length > 0 ? banner[0].path : null;
+// 		}
+
+// 		const userId = req.user._id;
+
+// 		const uploadedData = {};
+
+// 		if (userId) {
+// 			uploadedData.userId = userId;
+// 		}
+
+// 		if (avatarPath) {
+// 			uploadedData.avatarPath = avatarPath;
+// 		}
+
+// 		if (bannerPath) {
+// 			uploadedData.bannerPath = bannerPath;
+// 		}
+
+// 		const result = await updateUserPhotos(uploadedData);
+
+// 		res.json({ message: "Photos uploaded successfully", data: result });
+// 	} catch (error) {
+// 		console.log(error);
+// 		return res.status(error.status || 500).json({ error: error.message });
+// 	}
+// };
+
 export const handleUpdateUserPhotos = async (req, res) => {
 	try {
-		const { avatar, banner} = req.files || {};
+		const { avatar, banner } = req.files || {};
 
-		let avatarPath;
-		if (avatar) {
-			avatarPath = avatar.length > 0 ? avatar[0].path : null;
-		}
-		let bannerPath;
-		if (banner) {
-			bannerPath = banner.length > 0 ? banner[0].path : null;
-		}
+		let avatarBuffer = avatar && avatar.length > 0 ? avatar[0].buffer : null;
+		let bannerBuffer = banner && banner.length > 0 ? banner[0].buffer : null;
 
 		const userId = req.user._id;
 
-		const uploadedData = {};
+		const uploadedData = {
+			userId,
+			avatarBuffer,
+			bannerBuffer,
+		};
 
-		if (userId) {
-			uploadedData.userId = userId;
-		}
+		// if (userId) {
+		// 	uploadedData.userId = userId;
+		// }
 
-		if (avatarPath) {
-			uploadedData.avatarPath = avatarPath;
-		}
+		// if (avatarPath) {
+		// 	uploadedData.avatarPath = avatarPath;
+		// }
 
-		if (bannerPath) {
-			uploadedData.bannerPath = bannerPath;
-		}
+		// if (bannerPath) {
+		// 	uploadedData.bannerPath = bannerPath;
+		// }
 
 		const result = await updateUserPhotos(uploadedData);
 
@@ -133,7 +168,6 @@ export const handleUpdateUserPhotos = async (req, res) => {
 		return res.status(error.status || 500).json({ error: error.message });
 	}
 };
-
 export const handleAuthUser = async (req, res) => {
 	const userId = req.user._id;
 
