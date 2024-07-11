@@ -16482,3 +16482,13 @@ POST /login 401 222ms - Request size: 59 bytes 2024-07-11T10:26:22.851Z
 POST /login 401 24ms - Request size: 59 bytes 2024-07-11T10:26:25.864Z
 POST /login 401 14ms - Request size: 59 bytes 2024-07-11T10:29:34.543Z
 POST /login 401 8ms - Request size: 59 bytes 2024-07-11T10:29:40.383Z
+GET /featured 304 65ms - Request size: unknown bytes 2024-07-11T10:31:48.218Z
+GET /?page=1&search=&order=&limit=5&category= 304 133ms - Request size: unknown bytes 2024-07-11T10:31:48.314Z
+GET /featured 304 56ms - Request size: unknown bytes 2024-07-11T10:32:37.195Z
+GET /?page=1&search=&order=&limit=5&category= 304 136ms - Request size: unknown bytes 2024-07-11T10:32:37.290Z
+GET /featured 304 41ms - Request size: unknown bytes 2024-07-11T10:32:41.277Z
+GET /?page=1&search=&order=&limit=5&category= 304 84ms - Request size: unknown bytes 2024-07-11T10:32:41.331Z
+GET /featured 304 46ms - Request size: unknown bytes 2024-07-11T10:32:58.470Z
+GET /?page=1&search=&order=&limit=5&category= 304 93ms - Request size: unknown bytes 2024-07-11T10:32:58.520Z
+GET /featured 304 44ms - Request size: unknown bytes 2024-07-11T10:33:06.981Z
+GET /?page=1&search=&order=&limit=5&category= 304 77ms - Request size: unknown bytes 2024-07-11T10:33:07.030Z
