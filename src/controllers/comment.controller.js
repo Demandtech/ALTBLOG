@@ -9,6 +9,7 @@ import { checkAuthenticate } from "../helpers/checkAuthentication.js";
 
 export const handleCreateComment = async (req, res) => {
 	const { postId, userId, text } = req.body;
+	
 	try {
 		const newComment = await createComment({ postId, userId, text });
 		res.json({ data: newComment });

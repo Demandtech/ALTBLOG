@@ -38,7 +38,9 @@ export const handleChangePassword = async (req, res) => {
 	const { currentPassword, newPassword } = req.body;
 	const userId = req.user._id;
 
-	console.log({ userId, currentPassword, newPassword });
+	if (!userId) {
+		throw new ErrorAndStatus("Check required data", 400);
+	}
 
 	try {
 		const result = await changePassword({

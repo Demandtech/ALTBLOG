@@ -49,23 +49,28 @@ export const getGoogleToken = async (code) => {
 		const { email, family_name, picture, given_name, sub } =
 			jwt.decode(id_token);
 
-		const existingUser = await UserModel.findOne({
-			$or: [{ googleId: sub }, { email }],
-		});
+		const existingUser = await UserModel.findOne({ email });
 
 		if (existingUser) {
 			if (existingUser.googleId) {
 				const token = generateJWT(existingUser, config.tokenSecret);
 
 				return { token, message: `Welcome back, ${existingUser.first_name}!` };
+			} else {
+				existingUser.googleId = sub;
+				existingUser.save();
+
+				existingUser.toObject();
+
+				delete existingUser.password;
+
+				const token = generateJWT(existingUser, config.tokenSecret);
+
+				return {
+					token,
+					message: `Account linked successfully, ${existingUser.first_name}!`,
+				};
 			}
-			if (existingUser.linkedId) {
-				throw new ErrorAndStatus("Email already in use with LinkedIn", 404);
-			}
-			throw new ErrorAndStatus(
-				"Email already in use. Please login with your email and password",
-				404
-			);
 		}
 
 		let newUser = new UserModel({

@@ -4,11 +4,9 @@ import replyModel from "../databases/models/reply.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 
 export const createReply = async ({ commentId, userId, text }) => {
-	if (!commentId || !userId || !text)
-		throw new ErrorAndStatus("PostId, commenterId and text are required", 400);
-
 	try {
 		const comment = await commentModel.findById(commentId);
+		
 		if (!comment) throw new ErrorAndStatus("Comment not found", 404);
 
 		let commentReply = await new replyModel({

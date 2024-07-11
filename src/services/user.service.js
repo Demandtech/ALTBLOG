@@ -118,8 +118,6 @@ export const user = async (userId, authId) => {
 };
 
 export const updateUser = async (userId, newUser) => {
-	if (!userId) throw new ErrorAndStatus("Id is required!", 400);
-
 	try {
 		const user = await UserModel.findById(userId);
 
@@ -141,8 +139,7 @@ export const updateUserPhotos = async ({
 	userId,
 }) => {
 	if (!userId) throw new ErrorAndStatus("Id is required!", 400);
-	if (!avatarPath && !bannerPath)
-		throw new ErrorAndStatus("Id is required!", 400);
+
 	try {
 		const user = await UserModel.findById(userId);
 
@@ -151,21 +148,22 @@ export const updateUserPhotos = async ({
 		if (avatarPath) {
 			const avatarUrl = await uploadToCloudinary(
 				avatarPath,
-				`avatar_${userId}`
+				`avatar_${userId}`,
+				"avatars"
 			);
 			user.avatar = avatarUrl;
-		}
+		} 
 
 		if (bannerPath) {
 			const bannerUrl = await uploadToCloudinary(
 				bannerPath,
-				`banner_${userId}`
+				`banner_${userId}`,
+				"banners"
 			);
 			user.banner = bannerUrl;
+		} else {
+			user.banner = null;
 		}
-
-		// user.banner_image = bannerPath || user.banner_image; // Update only if provided
-		// user.avatar = avatarPath || user.avatar;
 
 		await user.save();
 

@@ -15,7 +15,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 import {
 	handleGoogleToken,
 	handleGoogleUrl,
-} from "../controllers/0auth.controller.js";
+} from "../controllers/Oauth.controller.js";
 
 const authRoute = Router();
 

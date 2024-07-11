@@ -1,6 +1,6 @@
-import { googleUrl, getGoogleToken } from "../services/0auth.service.js";
+import { googleUrl, getGoogleToken } from "../services/Oauth.service.js";
 
-export const handleGoogleUrl = (req, res) => {
+export const handleGoogleUrl = (_, res) => {
 	try {
 		const url = googleUrl();
 		res.json({ message: "Google authorization URL generated", url });
@@ -12,6 +12,8 @@ export const handleGoogleUrl = (req, res) => {
 };
 export const handleGoogleToken = async (req, res) => {
 	const { code } = req.query;
+
+	if (!code) throw new Error();
 
 	try {
 		const result = await getGoogleToken(code);

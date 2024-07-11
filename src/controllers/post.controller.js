@@ -204,8 +204,8 @@ export const handlePublishPost = async (req, res) => {
 };
 
 export const handleUpdatePost = async (req, res) => {
-	const postId = req.params.postId;
 	const { title, description, body, tags, category } = req.body;
+	const postId = req.params.postId;
 	const userId = req.user._id;
 
 	if (!postId) {

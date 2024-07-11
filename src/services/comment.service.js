@@ -5,8 +5,6 @@ import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 import replyModel from "../databases/models/reply.model.js";
 
 export const createComment = async ({ postId, userId, text }) => {
-	if (!postId || !userId || !text)
-		throw new ErrorAndStatus("PostId, commenterId and text are required", 400);
 
 	try {
 		const post = await blogModel.findById(postId);
@@ -26,6 +24,7 @@ export const createComment = async ({ postId, userId, text }) => {
 		});
 
 		return { message: "comment submitted successfully", data: comment };
+		
 	} catch (error) {
 		throw new ErrorAndStatus(
 			error.message || "An error occured, please try again later!",

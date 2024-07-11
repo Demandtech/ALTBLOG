@@ -45,6 +45,9 @@ export const handleUser = async (req, res) => {
 
 export const handleUpdateUser = async (req, res) => {
 	const id = req.user._id;
+
+	if (!id) res.status(400).json({ message: "Id is required!" });
+
 	const {
 		first_name,
 		last_name,
@@ -84,6 +87,7 @@ export const handleUpdateUser = async (req, res) => {
 			message: "Profile updated successfully!",
 			user: updatedUser,
 		});
+		
 	} catch (error) {
 		res.status(error.status || 500).json({
 			message:
@@ -94,15 +98,15 @@ export const handleUpdateUser = async (req, res) => {
 
 export const handleUpdateUserPhotos = async (req, res) => {
 	try {
-		const { avatar, banner_image } = req.files || {};
+		const { avatar, banner} = req.files || {};
 
 		let avatarPath;
 		if (avatar) {
 			avatarPath = avatar.length > 0 ? avatar[0].path : null;
 		}
 		let bannerPath;
-		if (banner_image) {
-			bannerPath = banner_image.length > 0 ? banner_image[0].path : null;
+		if (banner) {
+			bannerPath = banner.length > 0 ? banner[0].path : null;
 		}
 
 		const userId = req.user._id;

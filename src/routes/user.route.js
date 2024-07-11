@@ -34,7 +34,7 @@ userRoute.post(
 	validateMiddleware(updateUserPhotoSchema),
 	upload.fields([
 		{ name: "avatar", maxCount: 1 },
-		{ name: "banner_image", maxCount: 1 },
+		{ name: "banner", maxCount: 1 },
 	]),
 	handleUpdateUserPhotos
 );

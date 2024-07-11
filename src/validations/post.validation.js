@@ -5,14 +5,13 @@ export const createPostSchema = Joi.object({
 	body: Joi.string().required(),
 	category: Joi.string().required(),
 	tags: Joi.array().items(Joi.string().max(255)).max(5).required(),
-
-	description: Joi.string(),
+	description: Joi.string().required(),
 });
 
 export const updatePostSchema = Joi.object({
-	title: Joi.string(),
-	body: Joi.string(),
-	category: Joi.string(),
-	tags: Joi.array(),
-	description: Joi.string(),
+	title: Joi.string().required(),
+	body: Joi.string().required(),
+	category: Joi.string().required(),
+	tags: Joi.array().required(),
+	description: Joi.string().required(),
 });

@@ -8,10 +8,6 @@ import { redisClient } from "../server.js";
 import commentModel from "../databases/models/comment.model.js";
 import viewModel from "../databases/models/view.model.js";
 
-// import { postLikeSchema } from "../databases/schemas/like.schema.js";
-// import bookmarkSchema from "../databases/schemas/bookmark.schema.js";
-// import commentSchema from "../databases/schemas/comment.schema.js";
-
 export const createPost = async ({
 	title,
 	body,
@@ -20,10 +16,6 @@ export const createPost = async ({
 	author,
 	category,
 }) => {
-	if (!title || !body || !author) {
-		throw new ErrorAndStatus("Title, body, and author are required", 400);
-	}
-
 	const post = await postModel.findOne({
 		title: { $regex: new RegExp(`^${title}$`, "i") },
 	});
@@ -606,11 +598,8 @@ export const updatePost = async (postId, updatedPost, userId) => {
 };
 
 export const deletePost = async (postId, user) => {
+	
 	try {
-		if (!postId) {
-			throw new ErrorAndStatus("Post id param is required", 400);
-		}
-
 		const post = await postModel.findById(postId);
 
 		if (!post) {

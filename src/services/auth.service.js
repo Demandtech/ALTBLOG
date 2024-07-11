@@ -1,7 +1,6 @@
 import UserModel from "../databases/models/user.model.js";
 import { ErrorAndStatus } from "../exceptions/errorandstatus.js";
 import bcrypt from "bcrypt";
-import Jwt from "jsonwebtoken";
 import generateJWT from "../helpers/generateToken.js";
 
 export const register = async ({
@@ -21,10 +20,6 @@ export const register = async ({
 			);
 		}
 
-		if (!first_name || !last_name || !email || !password || !profession) {
-			throw new ErrorAndStatus("All fields are required", 404);
-		}
-
 		password = await bcrypt.hash(password, 10);
 
 		let newUser = new UserModel({
@@ -42,15 +37,13 @@ export const register = async ({
 		delete newUser.password;
 
 		return newUser;
+
 	} catch (error) {
 		throw new ErrorAndStatus(error?.message, error.status || 500);
 	}
 };
 
 export const login = async (email, password) => {
-	if (!email || !password) {
-		throw new ErrorAndStatus("All fields are required", 400);
-	}
 	try {
 		let user = await UserModel.findOne({ email });
 
@@ -58,20 +51,20 @@ export const login = async (email, password) => {
 			throw new ErrorAndStatus("Username or Password is incorrect", 401);
 		}
 
-		if (user.googleId)
-			throw new ErrorAndStatus(
-				"Email registered with google, please try to login with google!",
-				401
-			);
+		// if (user.googleId)
+		// 	throw new ErrorAndStatus(
+		// 		"Email registered with google, please try to login with google!",
+		// 		401
+		// 	);
 
-		if (user.linkedId)
-			throw new ErrorAndStatus(
-				"Email registered with linkedin, please try to login with linkedin!",
-				401
-			);
+		// if (user.linkedId)
+		// 	throw new ErrorAndStatus(
+		// 		"Email registered with linkedin, please try to login with linkedin!",
+		// 		401
+		// 	);
 
 		const passwordMatch = await bcrypt.compare(password, user.password);
-		
+
 		if (!passwordMatch) {
 			throw new ErrorAndStatus("Username or Password is incorrect", 401);
 		}
@@ -91,9 +84,6 @@ export const changePassword = async ({
 	newPassword,
 	userId,
 }) => {
-	if (!userId || !newPassword || !currentPassword)
-		throw new ErrorAndStatus("Check required data", 400);
-
 	try {
 		const user = await UserModel.findById(userId);
 
@@ -103,9 +93,12 @@ export const changePassword = async ({
 			currentPassword,
 			user.password
 		);
+
 		const isTheSamePassword = await bcrypt.compare(newPassword, user.password);
+
 		if (!isPasswordMatch)
 			throw new ErrorAndStatus("current password is incorrect", 400);
+
 
 		if (isTheSamePassword)
 			throw new ErrorAndStatus(
@@ -116,9 +109,11 @@ export const changePassword = async ({
 		const password = await bcrypt.hash(newPassword, 10);
 
 		user.password = password;
+
 		await user.save();
 
 		return { message: "Password changed successfully" };
+		
 	} catch (error) {
 		throw new ErrorAndStatus(
 			error.message || "Internal server error",
