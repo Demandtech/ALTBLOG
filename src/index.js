@@ -11,6 +11,7 @@ import cors from "cors";
 import path from "path";
 import likeRoute from "./routes/like.route.js";
 import replyRoute from "./routes/reply.route.js";
+import notificationRoute from "./routes/notification.route.js";
 
 dotenv.config();
 
@@ -18,30 +19,30 @@ const app = express();
 export const dir_name = path.dirname(new URL(import.meta.url).pathname);
 
 const allowedOrigins = [
-	"http://localhost:5173",
-	"https://altblog-frontend.vercel.app",
+  "http://localhost:5173",
+  "https://altblog-frontend.vercel.app",
 ];
 
 app.use(
-	cors({
-		origin: function (origin, callback) {
-			if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-				callback(null, true);
-			} else {
-				callback(new Error("Not allowed by CORS"));
-			}
-		},
-	})
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+  })
 );
 
 app.use(logger);
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(
-	bodyParser.urlencoded({
-		limit: "50mb",
-		extended: true,
-		parameterLimit: 50000,
-	})
+  bodyParser.urlencoded({
+    limit: "50mb",
+    extended: true,
+    parameterLimit: 50000,
+  })
 );
 
 app.use("/api/auth", authRoute);
@@ -50,13 +51,14 @@ app.use("/api/users", userRoute);
 app.use("/api/comments", commentRoute);
 app.use("/api/likes", likeRoute);
 app.use("/api/replies", replyRoute);
+app.use("/api/notification", notificationRoute);
 
 app.get("/", (req, res) => {
-	res.send("Welcome to Blogshot Api");
+  res.send("Welcome to Blogshot Api");
 });
 
 app.all("*", (req, res) => {
-	res.status(404).json({ message: `Page ${req.url} not found` });
+  res.status(404).json({ message: `Page ${req.url} not found` });
 });
 
 export default app;
