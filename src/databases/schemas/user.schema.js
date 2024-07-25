@@ -20,7 +20,6 @@ const userSchema = mongoose.Schema(
 		},
 		password: {
 			type: String,
-			// required: true,
 			trim: true,
 		},
 		role: {
@@ -30,7 +29,6 @@ const userSchema = mongoose.Schema(
 		},
 		profession: {
 			type: String,
-			// required: true,
 			trim: true,
 		},
 		dob: {
