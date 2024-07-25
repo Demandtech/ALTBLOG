@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import app from "./index.js";
 import redis from "redis";
+import { createServer } from "http";
+import socketServer from "./socket.js";
 
 const MONGO_URL = process.env.MONGO_URL;
 const PORT = process.env.PORT || 5500;
@@ -32,7 +34,11 @@ const startServer = async () => {
 
 		await redisClient.connect();
 
-		app.listen(PORT, () => {
+		const server = createServer(app);
+
+		await socketServer(server);
+
+		server.listen(PORT, () => {
 			console.log(`Server is running on PORT: ${PORT}`);
 		});
 	} catch (error) {

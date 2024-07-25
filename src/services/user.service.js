@@ -132,47 +132,6 @@ export const updateUser = async (userId, newUser) => {
 		throw ErrorAndStatus("An error occured!", 500);
 	}
 };
-
-// export const updateUserPhotos = async ({
-// 	avatarPath = null,
-// 	bannerPath = null,
-// 	userId,
-// }) => {
-// 	if (!userId) throw new ErrorAndStatus("Id is required!", 400);
-
-// 	try {
-// 		const user = await UserModel.findById(userId);
-
-// 		if (!user) throw new ErrorAndStatus("User not found", 404);
-
-// 		if (avatarPath) {
-// 			const avatarUrl = await uploadToCloudinary(
-// 				avatarPath,
-// 				`avatar_${userId}`,
-// 				"avatars"
-// 			);
-// 			user.avatar = avatarUrl;
-// 		}
-
-// 		if (bannerPath) {
-// 			const bannerUrl = await uploadToCloudinary(
-// 				bannerPath,
-// 				`banner_${userId}`,
-// 				"banners"
-// 			);
-// 			user.banner = bannerUrl;
-// 		} else {
-// 			user.banner = null;
-// 		}
-
-// 		await user.save();
-
-// 		return user;
-// 	} catch (error) {
-
-// 		throw new ErrorAndStatus(error.message || "An error occured!", 500);
-// 	}
-// };
 export const updateUserPhotos = async ({
 	avatarBuffer,
 	bannerBuffer,
